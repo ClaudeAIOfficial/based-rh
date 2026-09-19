@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/testimonials-columns-1";
 
 type Article = NewsColumnItem & {
+  reporter: string;
   body: string[];
 };
 
