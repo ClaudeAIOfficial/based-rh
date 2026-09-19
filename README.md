@@ -1,15 +1,35 @@
 # BASED
 
-Horror-documentary landing page for BASED, a fictional Robinhood Chain entity that "broke out" of the blockchain and discovered RWAs.
+BASED is a cinematic horror-documentary landing page built with Next.js, TypeScript, Tailwind CSS, shadcn-compatible project structure, and Motion.
 
-## Run locally
+## Stack
 
-Serve the folder with any static web server, for example:
+- Next.js App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- shadcn project structure
+- Motion
+
+## Component paths
+
+- UI components: `/components/ui`
+- Global styles: `/app/globals.css`
+- Utilities: `/lib/utils.ts`
+
+The archive headline uses `/components/ui/the-typewriter.tsx`.
+
+## Local development
 
 ```bash
-npx serve .
+npm install
+npm run dev
 ```
 
-## Deploy
+## Build
 
-The project is static and can be deployed directly to Vercel.
+```bash
+npm run build
+```
+
+The connected Vercel project deploys automatically from the `main` branch.
