@@ -24,6 +24,9 @@ type WindowState =
   | { type: "entity" }
   | null;
 
+const ENTITY_IMAGE_URL =
+  "https://d2ol7oe51mr4n9.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/febdb09b-cd91-487f-9338-1af8b78cfced.png";
+
 const GAME = [
   [14, 7, 0, 8, 6, 13, 20],
   [14, 7, 13, 20, 16, 27, 21],
@@ -223,8 +226,12 @@ function TerminalIcon() {
 
 function EntityIcon() {
   return (
-    <div className="grid h-12 w-12 place-items-center rounded-full border border-[var(--desk-border)] bg-white/[0.03]">
-      <div className="h-4 w-4 rotate-45 border border-white/70 shadow-[0_0_16px_rgba(255,255,255,.45)]" />
+    <div className="h-12 w-12 overflow-hidden rounded-full border border-[var(--desk-border)] bg-black shadow-[0_0_18px_rgba(255,255,255,.08)]">
+      <img
+        src={ENTITY_IMAGE_URL}
+        alt="B.A.S.E.D. entity"
+        className="h-full w-full object-cover"
+      />
     </div>
   );
 }
