@@ -21,7 +21,21 @@ const SECOND_TEXT =
   "15.09.2026 — The blockchain entity B.A.S.E.D. broke out onto the open World Wide Web. Humanity has lost control of it.";
 
 const CHEER_DURATION_MS = 3605;
+const FIRST_HOLD_MS = 1000;
 const SCREAM_DURATION_MS = 5251;
+const CODE_DURATION_MS = 850;
+const CODE_GAP_MS = 160;
+const SECOND_DURATION_MS = 2200;
+const INTRO_TIMELINE_MS =
+  CHEER_DURATION_MS +
+  FIRST_HOLD_MS +
+  SCREAM_DURATION_MS +
+  CODE_DURATION_MS +
+  CODE_GAP_MS +
+  SECOND_DURATION_MS;
+
+const TRANSITION_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/hf_20260919_161041_b7f9f133-90c0-474d-bad6-8c034032d4d6.mp4";
 
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("notice");
@@ -29,6 +43,7 @@ export default function ArchiveExperience() {
   const hasStartedRef = useRef(false);
   const cheerRef = useRef<HTMLAudioElement | null>(null);
   const screamRef = useRef<HTMLAudioElement | null>(null);
+  const transitionVideoRef = useRef<HTMLVideoElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -172,6 +187,32 @@ export default function ArchiveExperience() {
       phaseRef.current = "first";
       setPhase("first");
 
+      const transitionVideo = transitionVideoRef.current;
+      if (transitionVideo) {
+        transitionVideo.currentTime = 0;
+        transitionVideo.muted = true;
+
+        const syncPlaybackRate = () => {
+          if (
+            Number.isFinite(transitionVideo.duration) &&
+            transitionVideo.duration > 0
+          ) {
+            transitionVideo.playbackRate =
+              transitionVideo.duration / (INTRO_TIMELINE_MS / 1000);
+          }
+        };
+
+        syncPlaybackRate();
+
+        if (transitionVideo.readyState < 1) {
+          transitionVideo.addEventListener("loadedmetadata", syncPlaybackRate, {
+            once: true,
+          });
+        }
+
+        void transitionVideo.play().catch(() => undefined);
+      }
+
       if (cheer) {
         cheer.currentTime = 0;
         cheer.volume = 0.9;
@@ -207,7 +248,7 @@ export default function ArchiveExperience() {
       }, SCREAM_DURATION_MS);
 
       timersRef.current.push(reveal);
-    }, 1000);
+    }, FIRST_HOLD_MS);
 
     timersRef.current.push(wait);
   }, [playScreamFallback]);
@@ -216,18 +257,22 @@ export default function ArchiveExperience() {
     const timer = window.setTimeout(() => {
       phaseRef.current = "second";
       setPhase("second");
-    }, 160);
+    }, CODE_GAP_MS);
 
     timersRef.current.push(timer);
   }, []);
 
   const finishSecond = useCallback(() => {
-    const timer = window.setTimeout(() => {
-      phaseRef.current = "news";
-      setPhase("news");
-    }, 650);
+    const transitionVideo = transitionVideoRef.current;
+    if (transitionVideo) {
+      transitionVideo.pause();
+      if (Number.isFinite(transitionVideo.duration)) {
+        transitionVideo.currentTime = transitionVideo.duration;
+      }
+    }
 
-    timersRef.current.push(timer);
+    phaseRef.current = "news";
+    setPhase("news");
   }, []);
 
   if (phase === "news") {
@@ -245,7 +290,19 @@ export default function ArchiveExperience() {
         phase === "notice" ? "Click anywhere to enable sound." : undefined
       }
     >
-      <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
+      {phase === "notice" ? (
+        <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
+      ) : (
+        <video
+          ref={transitionVideoRef}
+          className="cinematic-transition-video"
+          src={TRANSITION_VIDEO}
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        />
+      )}
 
       {phase === "notice" ? (
         <div className="sound-notice">CLICK ANYWHERE TO ENABLE SOUND.</div>
@@ -275,7 +332,7 @@ export default function ArchiveExperience() {
                 duration={1}
                 loop={false}
                 startDelay={0}
-                targetDurationMs={850}
+                targetDurationMs={CODE_DURATION_MS}
                 glitch
                 onCharacter={playTypeKey}
                 onComplete={finishCode}
@@ -290,7 +347,7 @@ export default function ArchiveExperience() {
                   duration={1}
                   loop={false}
                   startDelay={0}
-                  targetDurationMs={2200}
+                  targetDurationMs={SECOND_DURATION_MS}
                   glitch
                   onCharacter={playTypeKey}
                   onComplete={finishSecond}
