@@ -1,15 +1,23 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
   --background: #020202;
   --foreground: #f1efe9;
   --destructive: #d7302f;
+  --muted-foreground: #8f8f8f;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --sidebar-ring: oklch(0.439 0 0);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-destructive: var(--destructive);
+  --color-muted-foreground: var(--muted-foreground);
   --font-sans: Arial, Helvetica, ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Courier New", Courier, ui-monospace, SFMono-Regular, monospace;
 }
@@ -501,4 +509,9 @@ body {
   pointer-events: none;
   background: #020202;
   filter: contrast(1.08) brightness(0.68);
+}
+
+
+.retro {
+  font-family: "Courier New", Courier, ui-monospace, SFMono-Regular, monospace;
 }
