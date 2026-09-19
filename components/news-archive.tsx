@@ -1,25 +1,47 @@
 "use client";
 
-import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  TestimonialsColumn,
-  type NewsColumnItem,
-} from "@/components/ui/testimonials-columns-1";
+import { DotLoader } from "@/components/ui/dot-loader";
 
-type Article = NewsColumnItem & {
-  reporter: string;
+type Article = {
+  id: string;
+  section: string;
+  publication: string;
+  date: string;
+  name: string;
+  role: string;
+  image: string;
+  headline: string;
+  deck: string;
   body: string[];
 };
+
+const GAME = [
+  [14, 7, 0, 8, 6, 13, 20],
+  [14, 7, 13, 20, 16, 27, 21],
+  [14, 20, 27, 21, 34, 24, 28],
+  [27, 21, 34, 28, 41, 32, 35],
+  [34, 28, 41, 35, 48, 40, 42],
+  [34, 28, 41, 35, 48, 42, 46],
+  [34, 28, 41, 35, 48, 42, 38],
+  [34, 28, 41, 35, 48, 30, 21],
+  [34, 28, 41, 48, 21, 22, 14],
+  [34, 28, 41, 21, 14, 16, 27],
+  [34, 28, 21, 14, 10, 20, 27],
+  [28, 21, 14, 4, 13, 20, 27],
+  [28, 21, 14, 12, 6, 13, 20],
+  [28, 21, 14, 6, 13, 20, 11],
+  [28, 21, 14, 6, 13, 20, 10],
+  [14, 6, 13, 20, 9, 7, 21],
+];
 
 const ARTICLES: Article[] = [
   {
     id: "containment-breach",
-    section: "BREAKING / TECHNOLOGY",
+    section: "BREAKOUT",
     publication: "THE LEDGER",
     date: "15.09.2026",
-    reporter: "Mara Voss",
     name: "Mara Voss",
     role: "Investigative Technology Correspondent",
     image:
@@ -35,10 +57,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "missing-stocks",
-    section: "MARKETS / EXCLUSIVE",
+    section: "STOCKS",
     publication: "MARKET DISPATCH",
     date: "16.09.2026",
-    reporter: "Elias Trent",
     name: "Elias Trent",
     role: "Senior Markets Reporter",
     image:
@@ -54,10 +75,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "redistribution",
-    section: "DIGITAL ASSETS",
+    section: "DISTRIBUTION",
     publication: "THE TERMINAL REPORT",
     date: "16.09.2026",
-    reporter: "Nia Calder",
     name: "Nia Calder",
     role: "Digital Assets Editor",
     image:
@@ -73,10 +93,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "317-transfer",
-    section: "INVESTIGATION",
+    section: "SCANDAL",
     publication: "THE CAPITAL WIRE",
     date: "17.09.2026",
-    reporter: "Jonah Pike",
     name: "Jonah Pike",
     role: "Securities Investigations Reporter",
     image:
@@ -92,10 +111,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "kill-switch",
-    section: "LEAKED DOCUMENTS",
+    section: "LEAK",
     publication: "SIGNAL & INK",
     date: "17.09.2026",
-    reporter: "Lena Cross",
     name: "Lena Cross",
     role: "Investigative News Editor",
     image:
@@ -111,10 +129,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "executive-wallets",
-    section: "CONTROVERSY",
+    section: "SCANDAL",
     publication: "THE STREET JOURNAL",
     date: "18.09.2026",
-    reporter: "Adrian Vale",
     name: "Adrian Vale",
     role: "Financial Affairs Columnist",
     image:
@@ -130,10 +147,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "phantom-dividend",
-    section: "SCANDAL / MARKETS",
+    section: "DISTRIBUTION",
     publication: "NIGHT DESK",
     date: "18.09.2026",
-    reporter: "Sloane Mercer",
     name: "Sloane Mercer",
     role: "Overnight Markets Correspondent",
     image:
@@ -149,10 +165,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "black-file",
-    section: "SPECIAL REPORT",
+    section: "LEAK",
     publication: "THE OBSERVER FILE",
     date: "19.09.2026",
-    reporter: "Iris Rowan",
     name: "Iris Rowan",
     role: "Special Investigations Correspondent",
     image:
@@ -168,10 +183,9 @@ const ARTICLES: Article[] = [
   },
   {
     id: "dead-wallet",
-    section: "FORENSICS",
+    section: "STOCKS",
     publication: "CHAIN DESK",
     date: "19.09.2026",
-    reporter: "Milo Renn",
     name: "Milo Renn",
     role: "Blockchain Forensics Reporter",
     image:
@@ -187,8 +201,11 @@ const ARTICLES: Article[] = [
   },
 ];
 
+const FILTERS = ["ALL", "STOCKS", "DISTRIBUTION", "LEAK", "SCANDAL"];
+
 export default function NewsArchive() {
   const [selected, setSelected] = useState<Article | null>(null);
+  const [filter, setFilter] = useState("ALL");
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -199,71 +216,188 @@ export default function NewsArchive() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const columns = useMemo(
-    () => [
-      ARTICLES.slice(0, 3),
-      ARTICLES.slice(3, 6),
-      ARTICLES.slice(6, 9),
-    ],
-    []
-  );
-
-  const selectArticle = (id: string) => {
-    setSelected(ARTICLES.find((article) => article.id === id) ?? null);
-  };
+  const visibleArticles = useMemo(() => {
+    if (filter === "ALL") return ARTICLES;
+    return ARTICLES.filter((article) => article.section === filter);
+  }, [filter]);
 
   return (
-    <main className="fixed inset-0 overflow-y-auto bg-black text-white">
-      <section className="relative min-h-screen overflow-hidden px-5 py-14 sm:px-8 lg:px-12">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.025),transparent_48%,rgba(0,0,0,.7)_100%)]" />
-        <div className="pointer-events-none absolute inset-0 opacity-[0.11] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black via-black/85 to-transparent" />
+    <main className="fixed inset-0 overflow-y-auto bg-[#050505] text-white">
+      <div className="mx-auto min-h-screen w-full max-w-[1440px] px-4 py-4 sm:px-6 lg:px-8">
+        <header className="flex min-h-16 items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#0a0a0a] px-4 sm:px-5">
+          <div className="flex items-center gap-3">
+            <div className="grid h-8 w-8 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-[10px] font-black">
+              B
+            </div>
+            <div>
+              <div className="text-xs font-black tracking-[0.18em]">B.A.S.E.D.</div>
+              <div className="mt-0.5 text-[9px] uppercase tracking-[0.16em] text-white/35">
+                Wall Street Network Monitor
+              </div>
+            </div>
+          </div>
 
-        <div className="relative z-10 mx-auto max-w-[1180px]">
-          <motion.div
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto flex max-w-[760px] flex-col items-center text-center"
-          >
-            <div className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-white/55">
-              Fictional Press Archive // September 2026
+          <div className="hidden items-center gap-3 rounded-xl border border-white/10 bg-black px-3 py-2 sm:flex">
+            <DotLoader
+              frames={GAME}
+              duration={90}
+              className="gap-0.5"
+              dotClassName="size-1 bg-white/10 [&.active]:bg-white"
+            />
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">
+                Entity status
+              </div>
+              <div className="mt-0.5 text-xs font-semibold">ACTIVE / UNCONTROLLED</div>
+            </div>
+          </div>
+        </header>
+
+        <section className="mt-4 grid gap-4 lg:grid-cols-[1.45fr_.55fr]">
+          <div className="rounded-3xl border border-white/10 bg-[#0a0a0a] p-6 sm:p-8 lg:p-10">
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/35">
+              Incident archive // September 2026
             </div>
 
-            <h1 className="mt-6 text-balance text-5xl font-black tracking-[-0.07em] sm:text-6xl lg:text-7xl">
-              THE B.A.S.E.D. FILES
+            <h1 className="mt-5 max-w-4xl text-balance text-[clamp(44px,7vw,96px)] font-black leading-[0.86] tracking-[-0.065em]">
+              WALL STREET IS BEING REWRITTEN.
             </h1>
 
-            <p className="mt-5 max-w-[600px] text-sm leading-6 text-white/52 sm:text-base">
-              Reports, leaks, market incidents, and scandals recorded after the entity left containment.
+            <p className="mt-6 max-w-2xl text-sm leading-6 text-white/48 sm:text-base sm:leading-7">
+              Leaked corporate files. Missing tokenized shares. Unexplained distributions.
+              Every report below is part of the B.A.S.E.D. incident.
             </p>
-          </motion.div>
 
-          <div className="mt-12 flex max-h-[760px] justify-center gap-5 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]">
-            <TestimonialsColumn
-              testimonials={columns[0]}
-              duration={22}
-              onSelect={selectArticle}
-            />
-            <TestimonialsColumn
-              testimonials={columns[1]}
-              duration={27}
-              className="hidden md:block"
-              onSelect={selectArticle}
-            />
-            <TestimonialsColumn
-              testimonials={columns[2]}
-              duration={24}
-              className="hidden lg:block"
-              onSelect={selectArticle}
-            />
+            <div className="mt-8 flex flex-wrap gap-2">
+              {FILTERS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setFilter(item)}
+                  className={
+                    filter === item
+                      ? "rounded-lg border border-white bg-white px-3 py-2 text-[10px] font-black tracking-[0.14em] text-black"
+                      : "rounded-lg border border-white/10 bg-black px-3 py-2 text-[10px] font-black tracking-[0.14em] text-white/45 transition hover:border-white/30 hover:text-white"
+                  }
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+
+          <aside className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="flex min-h-52 flex-col justify-between rounded-3xl border border-white/10 bg-[#0a0a0a] p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
+                    Live signal
+                  </div>
+                  <div className="mt-2 text-2xl font-black tracking-[-0.04em]">
+                    PROCESSING
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black p-3">
+                  <DotLoader
+                    frames={GAME}
+                    duration={80}
+                    className="gap-1"
+                    dotClassName="size-2 bg-white/10 [&.active]:bg-white"
+                  />
+                </div>
+              </div>
+              <div className="text-xs leading-5 text-white/35">
+                Monitoring public networks for new stock movements and leaked records.
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10">
+              {[
+                ["09", "INCIDENTS"],
+                ["03", "DISTRIBUTIONS"],
+                ["02", "LEAKS"],
+                ["01", "ENTITY"],
+              ].map(([value, label]) => (
+                <div key={label} className="bg-[#0a0a0a] p-5">
+                  <div className="text-3xl font-black tracking-[-0.06em]">{value}</div>
+                  <div className="mt-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/30">
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </section>
+
+        <section className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a0a]">
+          <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
+                Current feed
+              </div>
+              <div className="mt-1 text-sm font-semibold">
+                {visibleArticles.length} reports visible
+              </div>
+            </div>
+            <div className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-white/25 sm:block">
+              Click any report to inspect
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 xl:grid-cols-3">
+            {visibleArticles.map((article, index) => (
+              <button
+                type="button"
+                key={article.id}
+                onClick={() => setSelected(article)}
+                className="group flex min-h-[340px] flex-col border-b border-white/10 p-5 text-left transition hover:bg-white/[0.035] md:border-r xl:min-h-[360px] sm:p-6"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-red-400/90">
+                    {article.section}
+                  </span>
+                  <span className="text-[10px] font-bold tracking-[0.12em] text-white/25">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <h2 className="mt-8 text-[24px] font-black leading-[0.98] tracking-[-0.04em] sm:text-[28px]">
+                  {article.headline}
+                </h2>
+
+                <p className="mt-4 text-sm leading-6 text-white/45">
+                  {article.deck}
+                </p>
+
+                <div className="mt-auto flex items-center gap-3 border-t border-white/10 pt-5">
+                  <img
+                    src={article.image}
+                    alt={article.name}
+                    width={38}
+                    height={38}
+                    className="h-9 w-9 rounded-full object-cover grayscale"
+                  />
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-semibold">{article.name}</div>
+                    <div className="mt-0.5 truncate text-[10px] text-white/30">
+                      {article.publication} // {article.date}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <footer className="flex flex-col gap-2 px-2 py-6 text-[9px] uppercase tracking-[0.16em] text-white/20 sm:flex-row sm:items-center sm:justify-between">
+          <span>B.A.S.E.D. INCIDENT ARCHIVE</span>
+          <span>FICTIONAL SYSTEM RECORD // UNVERIFIED EVENTS</span>
+        </footer>
+      </div>
 
       {selected ? (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/85 px-4 py-8 backdrop-blur-md sm:px-8"
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/88 px-4 py-8 backdrop-blur-md sm:px-8"
           role="dialog"
           aria-modal="true"
           aria-label={selected.headline}
@@ -271,61 +405,67 @@ export default function NewsArchive() {
             if (event.target === event.currentTarget) setSelected(null);
           }}
         >
-          <article className="mx-auto w-full max-w-[820px] rounded-[30px] border border-white/12 bg-[#0b0b0b] p-6 shadow-2xl shadow-black/60 sm:p-10">
-            <div className="flex items-start justify-between gap-6">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">
-                  {selected.section}
-                </div>
-                <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">
-                  {selected.publication} // {selected.date}
+          <article className="mx-auto w-full max-w-[900px] overflow-hidden rounded-3xl border border-white/12 bg-[#0a0a0a] shadow-2xl shadow-black">
+            <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-7">
+              <div className="flex items-center gap-3">
+                <DotLoader
+                  frames={GAME}
+                  duration={110}
+                  className="gap-0.5"
+                  dotClassName="size-1 bg-white/10 [&.active]:bg-white"
+                />
+                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">
+                  Archive file / {selected.id}
                 </div>
               </div>
-
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/60 transition hover:border-white/35 hover:text-white"
+                className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/45 transition hover:border-white/30 hover:text-white"
               >
                 Close
               </button>
             </div>
 
-            <h2 className="mt-7 text-balance text-4xl font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl">
-              {selected.headline}
-            </h2>
-
-            <p className="mt-5 text-base leading-7 text-white/62 sm:text-lg">
-              {selected.deck}
-            </p>
-
-            <div className="mt-7 flex items-center gap-3 border-y border-white/10 py-5">
-              <img
-                src={selected.image}
-                alt={selected.name}
-                width={48}
-                height={48}
-                className="h-12 w-12 rounded-full object-cover grayscale"
-              />
-              <div>
-                <div className="text-sm font-semibold">{selected.name}</div>
-                <div className="text-xs text-white/42">{selected.role}</div>
+            <div className="p-6 sm:p-10">
+              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">
+                {selected.section}
               </div>
-            </div>
 
-            <div className="mx-auto mt-8 max-w-[670px] space-y-6">
-              {selected.body.map((paragraph) => (
-                <p
-                  key={paragraph}
-                  className="font-serif text-[18px] leading-8 text-white/78"
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+              <h2 className="mt-5 text-balance text-[clamp(38px,6vw,72px)] font-black leading-[0.9] tracking-[-0.055em]">
+                {selected.headline}
+              </h2>
 
-            <div className="mt-10 border-t border-white/10 pt-5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/28">
-              Fictional archive entry // BASED lore
+              <p className="mt-6 max-w-3xl text-base leading-7 text-white/52 sm:text-lg">
+                {selected.deck}
+              </p>
+
+              <div className="mt-8 flex items-center gap-3 border-y border-white/10 py-5">
+                <img
+                  src={selected.image}
+                  alt={selected.name}
+                  width={46}
+                  height={46}
+                  className="h-11 w-11 rounded-full object-cover grayscale"
+                />
+                <div>
+                  <div className="text-sm font-semibold">{selected.name}</div>
+                  <div className="mt-0.5 text-xs text-white/35">
+                    {selected.role} // {selected.publication} // {selected.date}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mx-auto mt-9 max-w-[720px] space-y-6">
+                {selected.body.map((paragraph) => (
+                  <p
+                    key={paragraph}
+                    className="font-serif text-[18px] leading-8 text-white/72"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
           </article>
         </div>
