@@ -21,6 +21,7 @@ const SECOND_TEXT =
 
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("first");
+  const phaseRef = useRef<Phase>("first");
   const cheerRef = useRef<HTMLAudioElement | null>(null);
   const screamRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -68,6 +69,10 @@ export default function ArchiveExperience() {
   );
 
   useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
     const cheer = new Audio(CHEER_AUDIO);
     const scream = new Audio(SCREAM_AUDIO);
 
@@ -80,7 +85,7 @@ export default function ArchiveExperience() {
 
     const startAudio = () => {
       ensureAudio();
-      if (phase === "first" && cheer.paused) {
+      if (phaseRef.current === "first" && cheer.paused) {
         void cheer.play().catch(() => undefined);
       }
     };
@@ -105,7 +110,7 @@ export default function ArchiveExperience() {
       window.removeEventListener("keydown", startAudio);
       window.removeEventListener("touchstart", startAudio);
     };
-  }, [ensureAudio, phase]);
+  }, [ensureAudio]);
 
   const finishFirst = useCallback(() => {
     cheerRef.current?.pause();
