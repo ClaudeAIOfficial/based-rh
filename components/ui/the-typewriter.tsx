@@ -47,6 +47,7 @@ export interface TextTypewriterProps {
   glitch?: boolean;
   onComplete?: () => void;
   onCharacter?: (character: string) => void;
+  targetDurationMs?: number;
 }
 
 const WRONG_CHARS = "!@#$%^&*()QWERTY";
@@ -64,6 +65,7 @@ export default function TextTypewriter({
   glitch = true,
   onComplete,
   onCharacter,
+  targetDurationMs,
 }: TextTypewriterProps) {
   const reducedMotion = useResolvedReducedMotion();
   const [text, setText] = useState("");
@@ -84,6 +86,73 @@ export default function TextTypewriter({
       const id = setTimeout(callback, ms * speed);
       timeouts.add(id);
     };
+
+    const scheduleRaw = (callback: () => void, ms: number) => {
+      const id = setTimeout(callback, ms);
+      timeouts.add(id);
+    };
+
+    if (targetDurationMs && targetDurationMs > 0) {
+      const finalText = children;
+      const slot = targetDurationMs / Math.max(1, finalText.length);
+
+      setText("");
+      setShowCursor(true);
+
+      finalText.split("").forEach((targetChar, index) => {
+        const base = startDelay + index * slot;
+        const prefix = finalText.slice(0, index);
+        const shouldGlitch =
+          glitch && Math.random() > 0.6 && targetChar !== " ";
+
+        if (shouldGlitch) {
+          const wrongChar = randomWrongChar();
+
+          scheduleRaw(() => {
+            setText(prefix + wrongChar);
+            onCharacter?.(wrongChar);
+          }, base);
+
+          if (Math.random() > 0.5) {
+            const secondWrongChar = randomWrongChar();
+            scheduleRaw(() => {
+              setText(prefix + secondWrongChar);
+              onCharacter?.(secondWrongChar);
+            }, base + slot * 0.34);
+          }
+
+          scheduleRaw(() => {
+            setText(prefix + targetChar);
+            onCharacter?.(targetChar);
+          }, base + slot * 0.68);
+        } else {
+          scheduleRaw(() => {
+            setText(prefix + targetChar);
+            onCharacter?.(targetChar);
+          }, base + slot * 0.32);
+        }
+      });
+
+      scheduleRaw(() => {
+        setText(finalText);
+        setShowCursor(false);
+        onComplete?.();
+
+        if (loop) {
+          scheduleRaw(() => {
+            setShowCursor(true);
+            setText("");
+          }, 1000);
+        }
+      }, startDelay + targetDurationMs);
+
+      return () => {
+        for (const id of timeouts) {
+          clearTimeout(id);
+        }
+        timeouts.clear();
+      };
+    }
 
     const runAnimation = () => {
       let currentText = "";
@@ -174,6 +243,7 @@ export default function TextTypewriter({
     onComplete,
     reducedMotion,
     startDelay,
+    targetDurationMs,
   ]);
 
   return (
