@@ -173,7 +173,7 @@ const DOSSIERS: Dossier[] = [
 const ROTATE_MS = 60_000;
 const TYPE_MS = 45_000;
 const TYPEWRITER_AUDIO =
-  "https://d2ol7oe51mr4n9.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/45316149-6951-4d5a-92a0-ae1ec1c371f0.mp3";
+  "https://d2ol7oe51mr4n9.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/90f4ffe2-0977-4b25-ae7c-4c80d009544b.mp3";
 
 export default function BasedDossierFeed() {
   const [index, setIndex] = useState(0);
