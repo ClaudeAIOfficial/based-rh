@@ -118,8 +118,10 @@ export default function TextTypewriter({
           glitch && Math.random() > 0.6 && targetChar !== " ";
 
         if (shouldGlitch) {
-          currentText += randomWrongChar();
+          const wrongChar = randomWrongChar();
+          currentText += wrongChar;
           setText(currentText);
+          onCharacter?.(wrongChar);
 
           schedule(
             () => {
@@ -128,8 +130,10 @@ export default function TextTypewriter({
 
               schedule(() => {
                 if (Math.random() > 0.5) {
-                  currentText += randomWrongChar();
+                  const wrongChar = randomWrongChar();
+                  currentText += wrongChar;
                   setText(currentText);
+                  onCharacter?.(wrongChar);
 
                   schedule(() => {
                     currentText = currentText.slice(0, -1);
