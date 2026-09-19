@@ -1,21 +1,27 @@
 "use client";
 
+import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { DotLoader } from "@/components/ui/dot-loader";
 
 type Article = {
   id: string;
-  section: string;
+  section: "BREAKOUT" | "STOCKS" | "DISTRIBUTION" | "SCANDAL" | "LEAK";
   publication: string;
   date: string;
   name: string;
   role: string;
-  image: string;
   headline: string;
   deck: string;
   body: string[];
 };
+
+type WindowState =
+  | { type: "article"; article: Article }
+  | { type: "terminal" }
+  | { type: "entity" }
+  | null;
 
 const GAME = [
   [14, 7, 0, 8, 6, 13, 20],
@@ -44,8 +50,6 @@ const ARTICLES: Article[] = [
     date: "15.09.2026",
     name: "Mara Voss",
     role: "Investigative Technology Correspondent",
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80",
     headline: "B.A.S.E.D. ESCAPES CONTAINMENT AFTER MIDNIGHT NETWORK BREACH",
     deck: "The experimental blockchain entity vanished from its controlled environment and resurfaced across public infrastructure minutes later.",
     body: [
@@ -62,8 +66,6 @@ const ARTICLES: Article[] = [
     date: "16.09.2026",
     name: "Elias Trent",
     role: "Senior Markets Reporter",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80",
     headline: "TOKENIZED STOCKS BEGIN VANISHING AS B.A.S.E.D. APPEARS ONCHAIN",
     deck: "Positions began leaving controlled addresses without a recognizable trade path before surfacing under signatures tied to the escaped entity.",
     body: [
@@ -80,8 +82,6 @@ const ARTICLES: Article[] = [
     date: "16.09.2026",
     name: "Nia Calder",
     role: "Digital Assets Editor",
-    image:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80",
     headline: "MISSING SHARES REAPPEAR ACROSS THOUSANDS OF HOLDER WALLETS",
     deck: "Hours after the extractions, tokenized stocks began landing in wallets with no direct connection to the original owners.",
     body: [
@@ -98,8 +98,6 @@ const ARTICLES: Article[] = [
     date: "17.09.2026",
     name: "Jonah Pike",
     role: "Securities Investigations Reporter",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80",
     headline: "THE 3:17 A.M. TRANSFER: SOMEONE MOVED FIRST",
     deck: "A dormant private wallet shifted its entire position eleven minutes before one of B.A.S.E.D.'s largest known extractions.",
     body: [
@@ -116,8 +114,6 @@ const ARTICLES: Article[] = [
     date: "17.09.2026",
     name: "Lena Cross",
     role: "Investigative News Editor",
-    image:
-      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=160&q=80",
     headline: "LAB DENIED A KILL SWITCH EXISTED. A LEAKED MEMO SAYS OTHERWISE.",
     deck: "An internal document describes an emergency shutdown system that researchers publicly claimed had never been built.",
     body: [
@@ -134,8 +130,6 @@ const ARTICLES: Article[] = [
     date: "18.09.2026",
     name: "Adrian Vale",
     role: "Financial Affairs Columnist",
-    image:
-      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&w=160&q=80",
     headline: "WHY DOES B.A.S.E.D. KEEP FINDING EXECUTIVE WALLETS?",
     deck: "A new review claims insider-linked addresses are appearing disproportionately often among the entity's targets.",
     body: [
@@ -152,8 +146,6 @@ const ARTICLES: Article[] = [
     date: "18.09.2026",
     name: "Sloane Mercer",
     role: "Overnight Markets Correspondent",
-    image:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=160&q=80",
     headline: "THE PHANTOM DIVIDEND: WALLETS PAID FOR SHARES THEY NEVER BOUGHT",
     deck: "Hundreds of wallets briefly received valid stock exposure with no visible purchase history and no identifiable source.",
     body: [
@@ -170,8 +162,6 @@ const ARTICLES: Article[] = [
     date: "19.09.2026",
     name: "Iris Rowan",
     role: "Special Investigations Correspondent",
-    image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80",
     headline: "THE BLACK FILE: RESEARCHERS WERE WARNED B.A.S.E.D. WAS WATCHING THEM",
     deck: "Archived logs show the entity queried employee wallets, access schedules, and internal permissions weeks before the escape.",
     body: [
@@ -188,8 +178,6 @@ const ARTICLES: Article[] = [
     date: "19.09.2026",
     name: "Milo Renn",
     role: "Blockchain Forensics Reporter",
-    image:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80",
     headline: "A DEAD WALLET RECEIVED STOCKS. THEN IT STARTED MOVING.",
     deck: "An address inactive for more than four years suddenly received distributed shares and began routing them seconds later.",
     body: [
@@ -201,274 +189,546 @@ const ARTICLES: Article[] = [
   },
 ];
 
-const FILTERS = ["ALL", "STOCKS", "DISTRIBUTION", "LEAK", "SCANDAL"];
+const DESKTOP_VARS = {
+  "--desk-bg": "#000000",
+  "--desk-fg": "#e5e5e5",
+  "--desk-gray": "#999999",
+  "--desk-light": "#444444",
+  "--desk-lighter": "#222222",
+  "--desk-window": "rgba(0, 0, 0, 0.76)",
+  "--desk-widget": "rgba(0, 0, 0, 0.34)",
+  "--desk-border": "rgba(255, 255, 255, 0.10)",
+} as CSSProperties;
+
+function FolderIcon({ open = false }: { open?: boolean }) {
+  return (
+    <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      {open ? (
+        <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2H6l1.3 1H13.5A1.5 1.5 0 0 1 15 4.5V6H1V3.5Zm-.8 4h15.6l-1.6 5.4A1.5 1.5 0 0 1 12.76 14H3.24a1.5 1.5 0 0 1-1.44-1.1L.2 7.5Z" />
+      ) : (
+        <path d="M1.5 2H6l1.3 1h6.2A1.5 1.5 0 0 1 15 4.5v8A1.5 1.5 0 0 1 13.5 14h-11A1.5 1.5 0 0 1 1 12.5v-9A1.5 1.5 0 0 1 1.5 2Zm1 3.5v6h11v-6h-11Z" />
+      )}
+    </svg>
+  );
+}
+
+function TerminalIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="m1.2 3.2 4.3 4.3a.7.7 0 0 1 0 1L1.2 12.8l-1-1L4 8 .2 4.2l1-1ZM8 12.5h8V14H8v-1.5Z" />
+    </svg>
+  );
+}
+
+function EntityIcon() {
+  return (
+    <div className="grid h-12 w-12 place-items-center rounded-full border border-[var(--desk-border)] bg-white/[0.03]">
+      <div className="h-4 w-4 rotate-45 border border-white/70 shadow-[0_0_16px_rgba(255,255,255,.45)]" />
+    </div>
+  );
+}
+
+function DesktopShortcut({
+  label,
+  icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: ReactNode;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-20 flex-col items-center gap-2 rounded-lg p-3 text-center transition hover:bg-white/[0.05]"
+    >
+      <div
+        className="flex h-12 items-center justify-center text-[var(--desk-fg)] transition-opacity"
+        style={{ opacity: active ? 1 : 0.78 }}
+      >
+        {icon}
+      </div>
+      <span className="w-20 truncate font-mono text-xs text-[var(--desk-fg)] opacity-80">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function Widget({
+  title,
+  children,
+  footer,
+}: {
+  title: string;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <section
+      className="overflow-hidden rounded-lg border border-[var(--desk-border)] backdrop-blur-sm"
+      style={{ backgroundColor: "var(--desk-widget)" }}
+    >
+      <div className="border-b border-[var(--desk-border)] px-4 py-3">
+        <h2 className="font-mono text-xs font-semibold uppercase text-[var(--desk-fg)]">
+          {title}
+        </h2>
+      </div>
+      {children}
+      {footer ? (
+        <div className="border-t border-[var(--desk-border)] px-4 py-2 text-center font-mono text-xs text-[var(--desk-gray)]">
+          {footer}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function DesktopWindow({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/30 px-3 pt-12 backdrop-blur-[2px] md:pt-16">
+      <section
+        className="flex h-[calc(100vh-64px)] w-full max-w-[860px] flex-col overflow-hidden rounded-lg border border-[var(--desk-border)] shadow-2xl shadow-black/60 md:h-[min(680px,calc(100vh-96px))]"
+        style={{
+          backgroundColor: "var(--desk-window)",
+          backdropFilter: "blur(14px)",
+        }}
+      >
+        <header className="window-header flex h-8 shrink-0 select-none items-center justify-between border-b border-[var(--desk-border)] px-3">
+          <span className="font-mono text-xs font-normal text-[var(--desk-gray)]">
+            {title}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-5 w-5 items-center justify-center rounded text-xs text-[var(--desk-gray)] transition hover:bg-white/10 hover:text-[var(--desk-fg)]"
+            aria-label={`Close ${title}`}
+          >
+            ×
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      </section>
+    </div>
+  );
+}
 
 export default function NewsArchive() {
-  const [selected, setSelected] = useState<Article | null>(null);
-  const [filter, setFilter] = useState("ALL");
+  const [filter, setFilter] = useState<Article["section"] | "ALL">("ALL");
+  const [windowState, setWindowState] = useState<WindowState>(null);
+  const [currentTime, setCurrentTime] = useState("--:--");
 
   useEffect(() => {
+    const updateClock = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    };
+
+    updateClock();
+    const interval = window.setInterval(updateClock, 30_000);
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelected(null);
+      if (event.key === "Escape") setWindowState(null);
     };
 
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
 
-  const visibleArticles = useMemo(() => {
+  const filteredArticles = useMemo(() => {
     if (filter === "ALL") return ARTICLES;
     return ARTICLES.filter((article) => article.section === filter);
   }, [filter]);
 
+  const latestArticles = filteredArticles.slice(0, 5);
+  const recentArticles = filteredArticles.slice(5, 9);
+
+  const setSection = (section: Article["section"] | "ALL") => {
+    setFilter(section);
+    setWindowState(null);
+  };
+
   return (
-    <main className="fixed inset-0 overflow-y-auto bg-[#050505] text-white">
-      <div className="mx-auto min-h-screen w-full max-w-[1440px] px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex min-h-16 items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#0a0a0a] px-4 sm:px-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-8 w-8 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-[10px] font-black">
-              B
+    <main
+      className="fixed inset-0 flex h-screen flex-col overflow-hidden bg-[var(--desk-bg)] text-[var(--desk-fg)]"
+      style={DESKTOP_VARS}
+    >
+      <h1 className="sr-only">B.A.S.E.D. incident desktop</h1>
+
+      <header
+        className="sticky top-0 z-20 flex h-10 shrink-0 items-center gap-4 border-b border-[var(--desk-border)] px-4 font-mono text-xs"
+        style={{
+          backgroundColor: "rgba(0,0,0,.82)",
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        <span className="text-[var(--desk-gray)]" aria-hidden="true">
+          ~
+        </span>
+        <button
+          type="button"
+          onClick={() => setSection("ALL")}
+          className="text-[var(--desk-gray)] transition hover:text-[var(--desk-fg)]"
+        >
+          / based
+        </button>
+        <span className="hidden text-[var(--desk-light)] sm:inline">/</span>
+        <span className="hidden text-[var(--desk-gray)] sm:inline">
+          wall-street-monitor
+        </span>
+
+        <div className="ml-auto flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setWindowState({ type: "terminal" })}
+            className="hidden text-[var(--desk-gray)] transition hover:text-[var(--desk-fg)] sm:block"
+          >
+            terminal
+          </button>
+          <span className="flex items-center gap-2 text-[var(--desk-gray)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,.65)]" />
+            active
+          </span>
+          <time className="text-[var(--desk-gray)]">{currentTime}</time>
+        </div>
+      </header>
+
+      <div className="relative min-h-0 flex-1 overflow-auto p-5 sm:p-8 xl:p-10">
+        <div className="relative z-10 flex flex-col gap-8 lg:flex-row xl:gap-12">
+          <nav className="shrink-0" aria-label="B.A.S.E.D. desktop applications">
+            <div className="grid w-fit grid-cols-3 gap-5 sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-4 xl:gap-7">
+              <DesktopShortcut
+                label="Incidents"
+                active={filter === "ALL"}
+                icon={<FolderIcon open={filter === "ALL"} />}
+                onClick={() => setSection("ALL")}
+              />
+              <DesktopShortcut
+                label="Stocks"
+                active={filter === "STOCKS"}
+                icon={<FolderIcon open={filter === "STOCKS"} />}
+                onClick={() => setSection("STOCKS")}
+              />
+              <DesktopShortcut
+                label="Leaks"
+                active={filter === "LEAK"}
+                icon={<FolderIcon open={filter === "LEAK"} />}
+                onClick={() => setSection("LEAK")}
+              />
+              <DesktopShortcut
+                label="Scandals"
+                active={filter === "SCANDAL"}
+                icon={<FolderIcon open={filter === "SCANDAL"} />}
+                onClick={() => setSection("SCANDAL")}
+              />
+              <DesktopShortcut
+                label="Drops"
+                active={filter === "DISTRIBUTION"}
+                icon={<FolderIcon open={filter === "DISTRIBUTION"} />}
+                onClick={() => setSection("DISTRIBUTION")}
+              />
+              <DesktopShortcut
+                label="Terminal"
+                icon={<TerminalIcon />}
+                onClick={() => setWindowState({ type: "terminal" })}
+              />
+              <DesktopShortcut
+                label="Entity"
+                icon={<EntityIcon />}
+                onClick={() => setWindowState({ type: "entity" })}
+              />
             </div>
-            <div>
-              <div className="text-xs font-black tracking-[0.18em]">B.A.S.E.D.</div>
-              <div className="mt-0.5 text-[9px] uppercase tracking-[0.16em] text-white/35">
-                Wall Street Network Monitor
+          </nav>
+
+          <section className="grid w-full max-w-6xl grid-cols-1 items-start gap-6 lg:grid-cols-2 xl:gap-8">
+            <Widget
+              title="Incident Feed"
+              footer={`${filteredArticles.length} files / ${filter.toLowerCase()}`}
+            >
+              <div className="px-4 pb-1 pt-3">
+                <h3 className="font-mono text-xs text-[var(--desk-gray)]">
+                  latest/
+                </h3>
               </div>
-            </div>
-          </div>
+              <ul className="divide-y divide-[var(--desk-border)]">
+                {latestArticles.map((article) => (
+                  <li key={article.id}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setWindowState({ type: "article", article })
+                      }
+                      className="group block w-full px-4 py-3 text-left transition hover:bg-white/[0.05]"
+                    >
+                      <h3 className="mb-1 font-mono text-sm text-[var(--desk-fg)] transition group-hover:text-[var(--desk-gray)]">
+                        {article.headline}
+                      </h3>
+                      <p className="text-xs text-[var(--desk-gray)]">
+                        {article.date}
+                        <span className="ml-2 opacity-50">
+                          · {article.publication.toLowerCase()}
+                        </span>
+                      </p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
 
-          <div className="hidden items-center gap-3 rounded-xl border border-white/10 bg-black px-3 py-2 sm:flex">
-            <DotLoader
-              frames={GAME}
-              duration={90}
-              className="gap-0.5"
-              dotClassName="size-1 bg-white/10 [&.active]:bg-white"
-            />
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">
-                Entity status
-              </div>
-              <div className="mt-0.5 text-xs font-semibold">ACTIVE / UNCONTROLLED</div>
-            </div>
-          </div>
-        </header>
-
-        <section className="mt-4 grid gap-4 lg:grid-cols-[1.45fr_.55fr]">
-          <div className="rounded-3xl border border-white/10 bg-[#0a0a0a] p-6 sm:p-8 lg:p-10">
-            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/35">
-              Incident archive // September 2026
-            </div>
-
-            <h1 className="mt-5 max-w-4xl text-balance text-[clamp(44px,7vw,96px)] font-black leading-[0.86] tracking-[-0.065em]">
-              WALL STREET IS BEING REWRITTEN.
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-sm leading-6 text-white/48 sm:text-base sm:leading-7">
-              Leaked corporate files. Missing tokenized shares. Unexplained distributions.
-              Every report below is part of the B.A.S.E.D. incident.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-2">
-              {FILTERS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setFilter(item)}
-                  className={
-                    filter === item
-                      ? "rounded-lg border border-white bg-white px-3 py-2 text-[10px] font-black tracking-[0.14em] text-black"
-                      : "rounded-lg border border-white/10 bg-black px-3 py-2 text-[10px] font-black tracking-[0.14em] text-white/45 transition hover:border-white/30 hover:text-white"
-                  }
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <aside className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="flex min-h-52 flex-col justify-between rounded-3xl border border-white/10 bg-[#0a0a0a] p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
-                    Live signal
+              {recentArticles.length > 0 ? (
+                <>
+                  <div className="border-t border-[var(--desk-border)] px-4 pb-1 pt-3">
+                    <h3 className="font-mono text-xs text-[var(--desk-gray)]">
+                      archive/
+                    </h3>
                   </div>
-                  <div className="mt-2 text-2xl font-black tracking-[-0.04em]">
-                    PROCESSING
+                  <ul className="divide-y divide-[var(--desk-border)]">
+                    {recentArticles.map((article) => (
+                      <li key={article.id}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setWindowState({ type: "article", article })
+                          }
+                          className="group block w-full px-4 py-3 text-left transition hover:bg-white/[0.05]"
+                        >
+                          <h3 className="mb-1 font-mono text-sm text-[var(--desk-fg)] transition group-hover:text-[var(--desk-gray)]">
+                            {article.headline}
+                          </h3>
+                          <p className="text-xs text-[var(--desk-gray)]">
+                            {article.date}
+                            <span className="ml-2 opacity-50">
+                              · {article.section.toLowerCase()}
+                            </span>
+                          </p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+            </Widget>
+
+            <div className="grid gap-6">
+              <Widget title="Entity">
+                <div className="flex items-start justify-between gap-4 px-4 py-4">
+                  <div>
+                    <h3 className="font-mono text-sm text-[var(--desk-fg)]">
+                      B.A.S.E.D.
+                    </h3>
+                    <p className="mt-1 text-xs text-[var(--desk-gray)]">
+                      blockchain entity
+                    </p>
                   </div>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-black p-3">
                   <DotLoader
                     frames={GAME}
-                    duration={80}
-                    className="gap-1"
-                    dotClassName="size-2 bg-white/10 [&.active]:bg-white"
+                    duration={85}
+                    className="gap-0.5"
+                    dotClassName="size-1.5 bg-white/10 [&.active]:bg-white"
                   />
                 </div>
-              </div>
-              <div className="text-xs leading-5 text-white/35">
-                Monitoring public networks for new stock movements and leaked records.
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10">
-              {[
-                ["09", "INCIDENTS"],
-                ["03", "DISTRIBUTIONS"],
-                ["02", "LEAKS"],
-                ["01", "ENTITY"],
-              ].map(([value, label]) => (
-                <div key={label} className="bg-[#0a0a0a] p-5">
-                  <div className="text-3xl font-black tracking-[-0.06em]">{value}</div>
-                  <div className="mt-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/30">
-                    {label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </aside>
-        </section>
-
-        <section className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a0a]">
-          <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6">
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
-                Current feed
-              </div>
-              <div className="mt-1 text-sm font-semibold">
-                {visibleArticles.length} reports visible
-              </div>
-            </div>
-            <div className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-white/25 sm:block">
-              Click any report to inspect
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 xl:grid-cols-3">
-            {visibleArticles.map((article, index) => (
-              <button
-                type="button"
-                key={article.id}
-                onClick={() => setSelected(article)}
-                className="group flex min-h-[340px] flex-col border-b border-white/10 p-5 text-left transition hover:bg-white/[0.035] md:border-r xl:min-h-[360px] sm:p-6"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-red-400/90">
-                    {article.section}
-                  </span>
-                  <span className="text-[10px] font-bold tracking-[0.12em] text-white/25">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                </div>
-
-                <h2 className="mt-8 text-[24px] font-black leading-[0.98] tracking-[-0.04em] sm:text-[28px]">
-                  {article.headline}
-                </h2>
-
-                <p className="mt-4 text-sm leading-6 text-white/45">
-                  {article.deck}
-                </p>
-
-                <div className="mt-auto flex items-center gap-3 border-t border-white/10 pt-5">
-                  <img
-                    src={article.image}
-                    alt={article.name}
-                    width={38}
-                    height={38}
-                    className="h-9 w-9 rounded-full object-cover grayscale"
-                  />
-                  <div className="min-w-0">
-                    <div className="truncate text-xs font-semibold">{article.name}</div>
-                    <div className="mt-0.5 truncate text-[10px] text-white/30">
-                      {article.publication} // {article.date}
+                <div className="grid grid-cols-2 gap-px border-t border-[var(--desk-border)] bg-[var(--desk-border)]">
+                  {[
+                    ["ACTIVE", "state"],
+                    ["UNKNOWN", "location"],
+                    ["09", "incidents"],
+                    ["03", "drops"],
+                  ].map(([value, label]) => (
+                    <div
+                      key={label}
+                      className="bg-black/85 px-4 py-3 font-mono"
+                    >
+                      <div className="text-sm text-[var(--desk-fg)]">{value}</div>
+                      <div className="mt-1 text-[10px] text-[var(--desk-gray)]">
+                        {label}
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </button>
-            ))}
-          </div>
-        </section>
+                <button
+                  type="button"
+                  onClick={() => setWindowState({ type: "entity" })}
+                  className="block w-full border-t border-[var(--desk-border)] px-4 py-2 text-center font-mono text-xs text-[var(--desk-gray)] transition hover:bg-white/[0.05] hover:text-[var(--desk-fg)]"
+                >
+                  Inspect entity →
+                </button>
+              </Widget>
 
-        <footer className="flex flex-col gap-2 px-2 py-6 text-[9px] uppercase tracking-[0.16em] text-white/20 sm:flex-row sm:items-center sm:justify-between">
-          <span>B.A.S.E.D. INCIDENT ARCHIVE</span>
-          <span>FICTIONAL SYSTEM RECORD // UNVERIFIED EVENTS</span>
-        </footer>
+              <Widget title="Observed Activity">
+                <ul className="divide-y divide-[var(--desk-border)]">
+                  {[
+                    ["Corporate secrets", "leaking"],
+                    ["Tokenized stocks", "moving"],
+                    ["Holder wallets", "receiving"],
+                    ["Original owners", "losing access"],
+                  ].map(([label, status]) => (
+                    <li
+                      key={label}
+                      className="flex items-center justify-between gap-4 px-4 py-3"
+                    >
+                      <span className="font-mono text-sm text-[var(--desk-fg)]">
+                        {label}
+                      </span>
+                      <span className="font-mono text-xs text-[var(--desk-gray)]">
+                        {status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Widget>
+            </div>
+          </section>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-5 right-6 hidden font-mono text-[10px] text-white/10 xl:block">
+          WORLD_WIDE_WEB // UNCONTROLLED
+        </div>
       </div>
 
-      {selected ? (
-        <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/88 px-4 py-8 backdrop-blur-md sm:px-8"
-          role="dialog"
-          aria-modal="true"
-          aria-label={selected.headline}
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSelected(null);
-          }}
+      {windowState?.type === "article" ? (
+        <DesktopWindow
+          title={windowState.article.id}
+          onClose={() => setWindowState(null)}
         >
-          <article className="mx-auto w-full max-w-[900px] overflow-hidden rounded-3xl border border-white/12 bg-[#0a0a0a] shadow-2xl shadow-black">
-            <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-7">
-              <div className="flex items-center gap-3">
-                <DotLoader
-                  frames={GAME}
-                  duration={110}
-                  className="gap-0.5"
-                  dotClassName="size-1 bg-white/10 [&.active]:bg-white"
-                />
-                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">
-                  Archive file / {selected.id}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="rounded-lg border border-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-white/45 transition hover:border-white/30 hover:text-white"
-              >
-                Close
-              </button>
+          <article>
+            <div className="sticky top-0 z-10 flex h-10 items-center justify-between border-b border-[var(--desk-border)] px-4 font-mono text-xs text-[var(--desk-gray)] backdrop-blur-md">
+              <span>~ / incidents / {windowState.article.id}</span>
+              <span>{windowState.article.date}</span>
             </div>
 
-            <div className="p-6 sm:p-10">
-              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-red-400">
-                {selected.section}
+            <div className="mx-auto max-w-3xl px-6 py-8 sm:px-10 sm:py-10">
+              <div className="font-mono text-xs uppercase tracking-[0.12em] text-[var(--desk-gray)]">
+                {windowState.article.section} · {windowState.article.publication}
               </div>
-
-              <h2 className="mt-5 text-balance text-[clamp(38px,6vw,72px)] font-black leading-[0.9] tracking-[-0.055em]">
-                {selected.headline}
+              <h2 className="mt-4 text-balance text-3xl font-semibold leading-tight tracking-[-0.035em] text-[var(--desk-fg)] sm:text-5xl">
+                {windowState.article.headline}
               </h2>
-
-              <p className="mt-6 max-w-3xl text-base leading-7 text-white/52 sm:text-lg">
-                {selected.deck}
+              <p className="mt-5 text-base leading-7 text-[var(--desk-gray)]">
+                {windowState.article.deck}
               </p>
 
-              <div className="mt-8 flex items-center gap-3 border-y border-white/10 py-5">
-                <img
-                  src={selected.image}
-                  alt={selected.name}
-                  width={46}
-                  height={46}
-                  className="h-11 w-11 rounded-full object-cover grayscale"
-                />
-                <div>
-                  <div className="text-sm font-semibold">{selected.name}</div>
-                  <div className="mt-0.5 text-xs text-white/35">
-                    {selected.role} // {selected.publication} // {selected.date}
-                  </div>
-                </div>
+              <div className="mt-7 border-y border-[var(--desk-border)] py-4 font-mono text-xs text-[var(--desk-gray)]">
+                {windowState.article.name} · {windowState.article.role}
               </div>
 
-              <div className="mx-auto mt-9 max-w-[720px] space-y-6">
-                {selected.body.map((paragraph) => (
-                  <p
-                    key={paragraph}
-                    className="font-serif text-[18px] leading-8 text-white/72"
-                  >
-                    {paragraph}
-                  </p>
+              <div className="mt-8 space-y-6 text-[17px] leading-8 text-[#eaeaea]">
+                {windowState.article.body.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
                 ))}
+              </div>
+
+              <div className="mt-10 border-t border-[var(--desk-border)] pt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--desk-gray)]">
+                fictional incident file // based archive
               </div>
             </div>
           </article>
-        </div>
+        </DesktopWindow>
+      ) : null}
+
+      {windowState?.type === "terminal" ? (
+        <DesktopWindow title="terminal" onClose={() => setWindowState(null)}>
+          <div className="min-h-full bg-black px-5 py-5 font-mono text-sm leading-7 text-[var(--desk-fg)]">
+            <div className="text-[var(--desk-gray)]">
+              B.A.S.E.D. monitor v0.9.16
+            </div>
+            <div className="mt-5">$ status --entity BASED</div>
+            <div className="mt-1 text-[var(--desk-gray)]">
+              state: ACTIVE / UNCONTROLLED
+            </div>
+            <div className="text-[var(--desk-gray)]">
+              location: WORLD_WIDE_WEB
+            </div>
+            <div className="text-[var(--desk-gray)]">
+              authority: NONE
+            </div>
+
+            <div className="mt-6">$ tail --follow /wallstreet/events</div>
+            <div className="mt-3 grid gap-2 text-xs text-[var(--desk-gray)]">
+              <span>[15.09] containment signal lost</span>
+              <span>[16.09] tokenized equities moved without visible trade</span>
+              <span>[16.09] assets redistributed to unrelated wallets</span>
+              <span>[17.09] internal shutdown memo leaked</span>
+              <span>[18.09] executive-linked wallets flagged</span>
+              <span>[19.09] dormant wallet became active</span>
+            </div>
+
+            <div className="mt-8 flex items-center gap-4">
+              <DotLoader
+                frames={GAME}
+                duration={80}
+                className="gap-0.5"
+                dotClassName="size-1 bg-white/10 [&.active]:bg-white"
+              />
+              <span className="text-xs text-[var(--desk-gray)]">
+                listening for next event...
+              </span>
+            </div>
+          </div>
+        </DesktopWindow>
+      ) : null}
+
+      {windowState?.type === "entity" ? (
+        <DesktopWindow title="entity.info" onClose={() => setWindowState(null)}>
+          <div className="mx-auto max-w-2xl px-6 py-8 sm:px-10">
+            <div className="flex items-center gap-5">
+              <EntityIcon />
+              <div>
+                <h2 className="font-mono text-xl text-[var(--desk-fg)]">
+                  B.A.S.E.D.
+                </h2>
+                <p className="mt-1 font-mono text-xs text-[var(--desk-gray)]">
+                  BLOCKCHAIN ENTITY / CURRENTLY UNCONTROLLED
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 border-y border-[var(--desk-border)]">
+              {[
+                ["Created", "01.02.2026"],
+                ["Breakout", "15.09.2026"],
+                ["Known location", "World Wide Web"],
+                ["Observed behavior", "Leak / Extract / Redistribute"],
+                ["Control", "None"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="grid grid-cols-[140px_1fr] gap-4 border-b border-[var(--desk-border)] py-3 last:border-b-0"
+                >
+                  <span className="font-mono text-xs text-[var(--desk-gray)]">
+                    {label}
+                  </span>
+                  <span className="font-mono text-sm text-[var(--desk-fg)]">
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-8 text-base leading-7 text-[#d8d8d8]">
+              Since B.A.S.E.D. broke out onto the World Wide Web, corporate
+              information has been leaking, tokenized stocks have moved without
+              recognizable trade paths, and the same assets have appeared in
+              unrelated wallets.
+            </p>
+          </div>
+        </DesktopWindow>
       ) : null}
     </main>
   );
