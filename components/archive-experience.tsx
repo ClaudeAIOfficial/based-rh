@@ -58,16 +58,49 @@ export default function ArchiveExperience() {
       const gain = context.createGain();
 
       oscillator.type = "square";
-      oscillator.frequency.setValueAtTime(690 + Math.random() * 230, now);
-      gain.gain.setValueAtTime(0.022, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.026);
+      oscillator.frequency.setValueAtTime(720 + Math.random() * 260, now);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.021);
 
       oscillator.connect(gain).connect(context.destination);
       oscillator.start(now);
-      oscillator.stop(now + 0.03);
+      oscillator.stop(now + 0.024);
     },
     [ensureAudio]
   );
+
+  const playScreamFallback = useCallback(() => {
+    const context = ensureAudio();
+    if (!context || context.state !== "running") return;
+
+    const now = context.currentTime;
+    const noiseBuffer = context.createBuffer(
+      1,
+      Math.floor(context.sampleRate * 0.8),
+      context.sampleRate
+    );
+    const data = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < data.length; i += 1) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    }
+
+    const noise = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    const gain = context.createGain();
+
+    noise.buffer = noiseBuffer;
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(1500, now);
+    filter.Q.value = 0.65;
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.32, now + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+
+    noise.connect(filter).connect(gain).connect(context.destination);
+    noise.start(now);
+  }, [ensureAudio]);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -78,7 +111,7 @@ export default function ArchiveExperience() {
     const scream = new Audio(SCREAM_AUDIO);
 
     cheer.loop = true;
-    cheer.volume = 0.62;
+    cheer.volume = 0;
     cheer.preload = "auto";
     scream.volume = 1;
     scream.preload = "auto";
@@ -110,23 +143,21 @@ export default function ArchiveExperience() {
       await context.resume().catch(() => undefined);
     }
 
-    // Prime both user-provided sounds inside the click gesture so browsers
-    // allow playback later in the sequence.
     const cheer = cheerRef.current;
     const scream = screamRef.current;
 
+    // Start the cheer inside the actual click gesture, muted.
+    // One second later we rewind + unmute without asking the browser to play again.
     if (cheer) {
+      cheer.currentTime = 0;
       cheer.volume = 0;
-      cheer.currentTime = 0;
       await cheer.play().catch(() => undefined);
-      cheer.pause();
-      cheer.currentTime = 0;
-      cheer.volume = 0.62;
     }
 
+    // Prime the scream inside the same gesture so later playback is permitted.
     if (scream) {
-      scream.volume = 0;
       scream.currentTime = 0;
+      scream.volume = 0;
       await scream.play().catch(() => undefined);
       scream.pause();
       scream.currentTime = 0;
@@ -139,7 +170,11 @@ export default function ArchiveExperience() {
 
       if (cheer) {
         cheer.currentTime = 0;
-        void cheer.play().catch(() => undefined);
+        cheer.volume = 0.9;
+
+        if (cheer.paused) {
+          void cheer.play().catch(() => undefined);
+        }
       }
     }, 1000);
 
@@ -156,7 +191,10 @@ export default function ArchiveExperience() {
       const scream = screamRef.current;
       if (scream) {
         scream.currentTime = 0;
-        void scream.play().catch(() => undefined);
+        scream.volume = 1;
+        void scream.play().catch(() => playScreamFallback());
+      } else {
+        playScreamFallback();
       }
 
       const reveal = window.setTimeout(() => {
@@ -168,13 +206,13 @@ export default function ArchiveExperience() {
     }, 1000);
 
     timersRef.current.push(wait);
-  }, []);
+  }, [playScreamFallback]);
 
   const finishCode = useCallback(() => {
     const timer = window.setTimeout(() => {
       phaseRef.current = "second";
       setPhase("second");
-    }, 220);
+    }, 160);
 
     timersRef.current.push(timer);
   }, []);
@@ -200,9 +238,9 @@ export default function ArchiveExperience() {
         {phase === "first" ? (
           <TextTypewriter
             className="cinematic-copy"
-            duration={2.2}
+            duration={1.15}
             loop={false}
-            startDelay={250}
+            startDelay={90}
             glitch
             onCharacter={playTypeKey}
             onComplete={finishFirst}
@@ -216,9 +254,9 @@ export default function ArchiveExperience() {
             {phase === "code" ? (
               <TextTypewriter
                 className="code-red"
-                duration={1.65}
+                duration={0.8}
                 loop={false}
-                startDelay={120}
+                startDelay={45}
                 glitch
                 onCharacter={playTypeKey}
                 onComplete={finishCode}
@@ -230,9 +268,9 @@ export default function ArchiveExperience() {
                 <div className="code-red static-code">{CODE_RED}</div>
                 <TextTypewriter
                   className="cinematic-copy second-copy"
-                  duration={2.25}
+                  duration={1.2}
                   loop={false}
-                  startDelay={180}
+                  startDelay={70}
                   glitch
                   onCharacter={playTypeKey}
                 >
