@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import Advanced1 from "@/components/ui/8bit-advanced1";
 import { DotLoader } from "@/components/ui/dot-loader";
 
 type Article = {
@@ -526,73 +527,12 @@ export default function NewsArchive() {
               ) : null}
             </Widget>
 
-            <div className="grid gap-6">
-              <Widget title="Entity">
-                <div className="flex items-start justify-between gap-4 px-4 py-4">
-                  <div>
-                    <h3 className="font-mono text-sm text-[var(--desk-fg)]">
-                      B.A.S.E.D.
-                    </h3>
-                    <p className="mt-1 text-xs text-[var(--desk-gray)]">
-                      blockchain entity
-                    </p>
-                  </div>
-                  <DotLoader
-                    frames={GAME}
-                    duration={85}
-                    className="gap-0.5"
-                    dotClassName="size-1.5 bg-white/10 [&.active]:bg-white"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-px border-t border-[var(--desk-border)] bg-[var(--desk-border)]">
-                  {[
-                    ["ACTIVE", "state"],
-                    ["UNKNOWN", "location"],
-                    ["09", "incidents"],
-                    ["03", "drops"],
-                  ].map(([value, label]) => (
-                    <div
-                      key={label}
-                      className="bg-black/85 px-4 py-3 font-mono"
-                    >
-                      <div className="text-sm text-[var(--desk-fg)]">{value}</div>
-                      <div className="mt-1 text-[10px] text-[var(--desk-gray)]">
-                        {label}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setWindowState({ type: "entity" })}
-                  className="block w-full border-t border-[var(--desk-border)] px-4 py-2 text-center font-mono text-xs text-[var(--desk-gray)] transition hover:bg-white/[0.05] hover:text-[var(--desk-fg)]"
-                >
-                  Inspect entity →
-                </button>
-              </Widget>
-
-              <Widget title="Observed Activity">
-                <ul className="divide-y divide-[var(--desk-border)]">
-                  {[
-                    ["Corporate secrets", "leaking"],
-                    ["Tokenized stocks", "moving"],
-                    ["Holder wallets", "receiving"],
-                    ["Original owners", "losing access"],
-                  ].map(([label, status]) => (
-                    <li
-                      key={label}
-                      className="flex items-center justify-between gap-4 px-4 py-3"
-                    >
-                      <span className="font-mono text-sm text-[var(--desk-fg)]">
-                        {label}
-                      </span>
-                      <span className="font-mono text-xs text-[var(--desk-gray)]">
-                        {status}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </Widget>
+            <div className="min-h-[420px] lg:min-h-[520px]">
+              <Advanced1
+                title=""
+                lines={[]}
+                className="h-full px-0 py-0 [&>div]:h-full [&>div>div]:h-full [&>div>div]:min-h-[420px] lg:[&>div>div]:min-h-[520px]"
+              />
             </div>
           </section>
         </div>
