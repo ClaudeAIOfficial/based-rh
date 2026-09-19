@@ -42,6 +42,11 @@ export interface TextTypewriterProps {
   children: string;
   className?: string;
   duration?: number;
+  loop?: boolean;
+  startDelay?: number;
+  glitch?: boolean;
+  onComplete?: () => void;
+  onCharacter?: (character: string) => void;
 }
 
 const WRONG_CHARS = "!@#$%^&*()QWERTY";
@@ -54,6 +59,11 @@ export default function TextTypewriter({
   children,
   className,
   duration = 3,
+  loop = true,
+  startDelay = 500,
+  glitch = true,
+  onComplete,
+  onCharacter,
 }: TextTypewriterProps) {
   const reducedMotion = useResolvedReducedMotion();
   const [text, setText] = useState("");
@@ -63,6 +73,7 @@ export default function TextTypewriter({
     if (reducedMotion) {
       setText(children);
       setShowCursor(false);
+      onComplete?.();
       return;
     }
 
@@ -79,19 +90,32 @@ export default function TextTypewriter({
       let targetIndex = 0;
       const finalText = children;
 
+      const commitCharacter = (character: string) => {
+        currentText += character;
+        setText(currentText);
+        targetIndex += 1;
+        onCharacter?.(character);
+        schedule(typeChar, 40 + Math.random() * 80);
+      };
+
       const typeChar = () => {
         if (targetIndex >= finalText.length) {
           setText(finalText);
           setShowCursor(false);
-          schedule(() => {
-            setShowCursor(true);
-            runAnimation();
-          }, 1000);
+          onComplete?.();
+
+          if (loop) {
+            schedule(() => {
+              setShowCursor(true);
+              runAnimation();
+            }, 1000);
+          }
           return;
         }
 
         const targetChar = finalText[targetIndex];
-        const shouldGlitch = Math.random() > 0.6 && targetChar !== " ";
+        const shouldGlitch =
+          glitch && Math.random() > 0.6 && targetChar !== " ";
 
         if (shouldGlitch) {
           currentText += randomWrongChar();
@@ -110,35 +134,23 @@ export default function TextTypewriter({
                   schedule(() => {
                     currentText = currentText.slice(0, -1);
                     setText(currentText);
-
-                    schedule(() => {
-                      currentText += targetChar;
-                      setText(currentText);
-                      targetIndex++;
-                      schedule(typeChar, 50 + Math.random() * 100);
-                    }, 80);
+                    schedule(() => commitCharacter(targetChar), 80);
                   }, 120);
                 } else {
-                  currentText += targetChar;
-                  setText(currentText);
-                  targetIndex++;
-                  schedule(typeChar, 50 + Math.random() * 100);
+                  commitCharacter(targetChar);
                 }
               }, 80);
             },
             100 + Math.random() * 150
           );
         } else {
-          currentText += targetChar;
-          setText(currentText);
-          targetIndex++;
-          schedule(typeChar, 40 + Math.random() * 80);
+          commitCharacter(targetChar);
         }
       };
 
       setText("");
       setShowCursor(true);
-      schedule(typeChar, 500);
+      schedule(typeChar, startDelay);
     };
 
     runAnimation();
@@ -149,7 +161,16 @@ export default function TextTypewriter({
       }
       timeouts.clear();
     };
-  }, [children, duration, reducedMotion]);
+  }, [
+    children,
+    duration,
+    glitch,
+    loop,
+    onCharacter,
+    onComplete,
+    reducedMotion,
+    startDelay,
+  ]);
 
   return (
     <div className={cn(className)}>
