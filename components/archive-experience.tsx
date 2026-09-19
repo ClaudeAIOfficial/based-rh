@@ -34,8 +34,12 @@ const INTRO_TIMELINE_MS =
   CODE_GAP_MS +
   SECOND_DURATION_MS;
 
+const TRANSITION_VIDEO_DURATION_MS = 6042;
+const TRANSITION_PLAYBACK_RATE =
+  TRANSITION_VIDEO_DURATION_MS / INTRO_TIMELINE_MS;
+
 const TRANSITION_VIDEO =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/hf_20260919_161041_b7f9f133-90c0-474d-bad6-8c034032d4d6.mp4";
+  "https://d2ol7oe51mr4n9.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/0a303a86-7524-4c8d-abfe-76e57a1854b7.mp4";
 
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("notice");
@@ -189,27 +193,11 @@ export default function ArchiveExperience() {
 
       const transitionVideo = transitionVideoRef.current;
       if (transitionVideo) {
+        transitionVideo.pause();
         transitionVideo.currentTime = 0;
         transitionVideo.muted = true;
-
-        const syncPlaybackRate = () => {
-          if (
-            Number.isFinite(transitionVideo.duration) &&
-            transitionVideo.duration > 0
-          ) {
-            transitionVideo.playbackRate =
-              transitionVideo.duration / (INTRO_TIMELINE_MS / 1000);
-          }
-        };
-
-        syncPlaybackRate();
-
-        if (transitionVideo.readyState < 1) {
-          transitionVideo.addEventListener("loadedmetadata", syncPlaybackRate, {
-            once: true,
-          });
-        }
-
+        transitionVideo.defaultPlaybackRate = TRANSITION_PLAYBACK_RATE;
+        transitionVideo.playbackRate = TRANSITION_PLAYBACK_RATE;
         void transitionVideo.play().catch(() => undefined);
       }
 
@@ -290,9 +278,9 @@ export default function ArchiveExperience() {
         phase === "notice" ? "Click anywhere to enable sound." : undefined
       }
     >
-      {phase === "notice" ? (
-        <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
-      ) : (
+      <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
+
+      {phase !== "notice" ? (
         <video
           ref={transitionVideoRef}
           className="cinematic-transition-video"
@@ -302,7 +290,7 @@ export default function ArchiveExperience() {
           preload="auto"
           aria-hidden="true"
         />
-      )}
+      ) : null}
 
       {phase === "notice" ? (
         <div className="sound-notice">CLICK ANYWHERE TO ENABLE SOUND.</div>
