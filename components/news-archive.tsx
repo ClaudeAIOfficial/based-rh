@@ -215,20 +215,9 @@ export default function NewsArchive() {
   return (
     <main className="fixed inset-0 overflow-y-auto bg-black text-white">
       <section className="relative min-h-screen overflow-hidden px-5 py-14 sm:px-8 lg:px-12">
-        <video
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/hf_20260919_161041_b7f9f133-90c0-474d-bad6-8c034032d4d6.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-black/58" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_22%,rgba(0,0,0,.72)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.025),transparent_48%,rgba(0,0,0,.7)_100%)]" />
         <div className="pointer-events-none absolute inset-0 opacity-[0.11] [background-image:linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:42px_42px]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/95 via-black/72 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black via-black/85 to-transparent" />
 
         <div className="relative z-10 mx-auto max-w-[1180px]">
           <motion.div
