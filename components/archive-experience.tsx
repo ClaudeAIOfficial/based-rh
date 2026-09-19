@@ -14,7 +14,7 @@ const ASCII_SOURCE =
 const INTRO_TEXT =
   "Since the blockchain entity B.A.S.E.D. broke out onto the World Wide Web, strange things have been happening on Wall Street. Wall Street’s corporate secrets are being leaked, stocks are being randomly put onchain, shareholders are losing their stocks, and those same stocks are appearing in different wallets.";
 
-const TYPE_DURATION_MS = 6500;
+const TYPE_DURATION_MS = 5085;
 const HOLD_AFTER_TEXT_MS = 900;
 
 export default function ArchiveExperience() {
@@ -48,7 +48,7 @@ export default function ArchiveExperience() {
           className="cinematic-copy"
           duration={1}
           loop={false}
-          startDelay={350}
+          startDelay={0}
           targetDurationMs={TYPE_DURATION_MS}
           glitch
           onComplete={finishIntro}
