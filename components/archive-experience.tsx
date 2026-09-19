@@ -3,8 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import TextTypewriter from "@/components/ui/the-typewriter";
+import AsciiArtBackground from "@/components/ui/ascii-art-background";
 
 type Phase = "creation" | "breach" | "site";
+
+const ASCII_SOURCE =
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1800&q=85";
 
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("creation");
@@ -56,6 +60,7 @@ export default function ArchiveExperience() {
   if (phase !== "site") {
     return (
       <main className="archive-screen">
+        <AsciiArtBackground src={ASCII_SOURCE} className="archive-ascii" />
         <div className="archive-noise" aria-hidden />
         <div className="archive-scanlines" aria-hidden />
 
@@ -156,6 +161,7 @@ export default function ArchiveExperience() {
 
   return (
     <main className="site-shell">
+      <AsciiArtBackground src={ASCII_SOURCE} className="site-ascii" />
       <div className="archive-noise soft" aria-hidden />
       <nav className="site-nav">
         <div className="site-brand">BASED_</div>
