@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 import {
@@ -14,8 +16,10 @@ export interface TerminalLine {
 }
 
 interface Advanced1Props {
+  children?: ReactNode;
   className?: string;
   lines?: TerminalLine[];
+  showPrompt?: boolean;
   title?: string;
 }
 
@@ -46,8 +50,10 @@ function linePrefix(type: TerminalLine["type"]): string {
 }
 
 export default function Advanced1({
+  children,
   title = "Terminal",
   lines = defaultLines,
+  showPrompt = true,
   className,
 }: Advanced1Props) {
   return (
@@ -68,7 +74,7 @@ export default function Advanced1({
           </CardHeader>
           <CardContent>
             <div className="space-y-0.5">
-              {lines.map((line, idx) => (
+              {children ?? lines.map((line, idx) => (
                 <p
                   className={cn(
                     "retro text-[10px] leading-relaxed",
@@ -80,9 +86,11 @@ export default function Advanced1({
                   {line.text}
                 </p>
               ))}
-              <p className="retro animate-pulse text-[10px] text-foreground">
-                {">"} _
-              </p>
+              {showPrompt ? (
+                <p className="retro animate-pulse text-[10px] text-foreground">
+                  {">"} _
+                </p>
+              ) : null}
             </div>
           </CardContent>
         </Card>
