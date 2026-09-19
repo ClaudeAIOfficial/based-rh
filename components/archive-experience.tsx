@@ -19,6 +19,9 @@ const CODE_RED = "CODE RED. I repeat: CODE RED.";
 const SECOND_TEXT =
   "15.09.2026 — The blockchain entity B.A.S.E.D. broke out onto the open World Wide Web. Humanity has lost control of it.";
 
+const CHEER_DURATION_MS = 3605;
+const SCREAM_DURATION_MS = 5251;
+
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("notice");
   const phaseRef = useRef<Phase>("notice");
@@ -110,7 +113,7 @@ export default function ArchiveExperience() {
     const cheer = new Audio(CHEER_AUDIO);
     const scream = new Audio(SCREAM_AUDIO);
 
-    cheer.loop = true;
+    cheer.loop = false;
     cheer.volume = 0;
     cheer.preload = "auto";
     scream.volume = 1;
@@ -182,9 +185,9 @@ export default function ArchiveExperience() {
   }, [ensureAudio]);
 
   const finishFirst = useCallback(() => {
-    const wait = window.setTimeout(() => {
-      cheerRef.current?.pause();
+    cheerRef.current?.pause();
 
+    const wait = window.setTimeout(() => {
       phaseRef.current = "scream";
       setPhase("scream");
 
@@ -200,7 +203,7 @@ export default function ArchiveExperience() {
       const reveal = window.setTimeout(() => {
         phaseRef.current = "code";
         setPhase("code");
-      }, 900);
+      }, SCREAM_DURATION_MS);
 
       timersRef.current.push(reveal);
     }, 1000);
@@ -238,9 +241,10 @@ export default function ArchiveExperience() {
         {phase === "first" ? (
           <TextTypewriter
             className="cinematic-copy"
-            duration={1.15}
+            duration={1}
             loop={false}
-            startDelay={90}
+            startDelay={0}
+            targetDurationMs={CHEER_DURATION_MS}
             glitch
             onCharacter={playTypeKey}
             onComplete={finishFirst}
@@ -254,9 +258,10 @@ export default function ArchiveExperience() {
             {phase === "code" ? (
               <TextTypewriter
                 className="code-red"
-                duration={0.8}
+                duration={1}
                 loop={false}
-                startDelay={45}
+                startDelay={0}
+                targetDurationMs={850}
                 glitch
                 onCharacter={playTypeKey}
                 onComplete={finishCode}
@@ -268,9 +273,10 @@ export default function ArchiveExperience() {
                 <div className="code-red static-code">{CODE_RED}</div>
                 <TextTypewriter
                   className="cinematic-copy second-copy"
-                  duration={1.2}
+                  duration={1}
                   loop={false}
-                  startDelay={70}
+                  startDelay={0}
+                  targetDurationMs={2200}
                   glitch
                   onCharacter={playTypeKey}
                 >
