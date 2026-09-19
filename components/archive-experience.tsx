@@ -1,244 +1,189 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import TextTypewriter from "@/components/ui/the-typewriter";
-import AsciiArtBackground from "@/components/ui/ascii-art-background";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type Phase = "creation" | "breach" | "site";
+import AsciiArtBackground from "@/components/ui/ascii-art-background";
+import TextTypewriter from "@/components/ui/the-typewriter";
+import { CHEER_AUDIO, SCREAM_AUDIO } from "@/lib/cinematic-audio";
+
+type Phase = "first" | "scream" | "code" | "second";
 
 const ASCII_SOURCE =
   "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1800&q=85";
 
+const FIRST_TEXT =
+  '01.02.2026. Computer scientists created the first Blockchain Entity "B.A.S.E.D".';
+
+const CODE_RED = "CODE RED I repeat CODE RED";
+
+const SECOND_TEXT =
+  "15.09.2026. The Blockchain Entity B.A.S.E.D broke out into the open World Wide Web and humanity has lost control over it.";
+
 export default function ArchiveExperience() {
-  const [phase, setPhase] = useState<Phase>("creation");
-  const [soundOn, setSoundOn] = useState(false);
+  const [phase, setPhase] = useState<Phase>("first");
+  const cheerRef = useRef<HTMLAudioElement | null>(null);
+  const screamRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const timersRef = useRef<number[]>([]);
 
-  useEffect(() => {
-    if (phase !== "creation") return;
-    const timer = window.setTimeout(() => setPhase("breach"), 5200);
-    return () => window.clearTimeout(timer);
-  }, [phase]);
-
-  const playStatic = () => {
-    if (!soundOn) return;
+  const ensureAudio = useCallback(() => {
     const AudioContextClass =
       window.AudioContext ??
       (window as typeof window & { webkitAudioContext?: typeof AudioContext })
         .webkitAudioContext;
-    if (!AudioContextClass) return;
+
+    if (!AudioContextClass) return null;
 
     const context = audioContextRef.current ?? new AudioContextClass();
     audioContextRef.current = context;
 
-    const buffer = context.createBuffer(
-      1,
-      Math.floor(context.sampleRate * 0.22),
-      context.sampleRate
-    );
-    const data = buffer.getChannelData(0);
-
-    for (let i = 0; i < data.length; i += 1) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    if (context.state === "suspended") {
+      void context.resume();
     }
 
-    const source = context.createBufferSource();
-    const gain = context.createGain();
-    gain.gain.value = 0.12;
-    source.buffer = buffer;
-    source.connect(gain).connect(context.destination);
-    source.start();
-  };
+    return context;
+  }, []);
+
+  const playTypeKey = useCallback(
+    (character: string) => {
+      if (character === " ") return;
+
+      const context = ensureAudio();
+      if (!context || context.state !== "running") return;
+
+      const now = context.currentTime;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(720 + Math.random() * 180, now);
+      gain.gain.setValueAtTime(0.018, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
+
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.025);
+    },
+    [ensureAudio]
+  );
 
   useEffect(() => {
-    if (phase === "breach") playStatic();
-    // playStatic intentionally depends on the current sound preference.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+    const cheer = new Audio(CHEER_AUDIO);
+    const scream = new Audio(SCREAM_AUDIO);
 
-  if (phase !== "site") {
-    return (
-      <main className="archive-screen">
-        <AsciiArtBackground src={ASCII_SOURCE} className="archive-ascii" />
-        <div className="archive-noise" aria-hidden />
-        <div className="archive-scanlines" aria-hidden />
+    cheer.loop = true;
+    cheer.volume = 0.62;
+    scream.volume = 1;
 
-        <button
-          className="sound-control"
-          type="button"
-          onClick={() => setSoundOn((value) => !value)}
-        >
-          SOUND: {soundOn ? "ON" : "OFF"}
-        </button>
+    cheerRef.current = cheer;
+    screamRef.current = scream;
 
-        <div className="archive-id">ARCHIVE // RH-001</div>
+    const startAudio = () => {
+      ensureAudio();
+      if (phase === "first" && cheer.paused) {
+        void cheer.play().catch(() => undefined);
+      }
+    };
 
-        <AnimatePresence mode="wait">
-          {phase === "creation" ? (
-            <motion.article
-              key="creation"
-              className="news-frame"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, filter: "blur(2px)" }}
-              transition={{ duration: 0.35 }}
-            >
-              <div className="news-meta">
-                <span>09.12.2026</span>
-                <span>RESEARCH LOG // 001</span>
-              </div>
+    void cheer.play().catch(() => undefined);
 
-              <div className="news-rule" />
+    window.addEventListener("pointerdown", startAudio, { passive: true });
+    window.addEventListener("keydown", startAudio);
+    window.addEventListener("touchstart", startAudio, { passive: true });
 
-              <p className="news-kicker">ARCHIVED DEVELOPMENT BULLETIN</p>
-              <TextTypewriter
-                className="archive-type-headline"
-                duration={2.7}
-              >
-                SCIENTISTS CREATED BASED.
-              </TextTypewriter>
-              <p className="news-deck">
-                The first artificial entity built to exist entirely on the
-                blockchain.
-              </p>
+    return () => {
+      cheer.pause();
+      scream.pause();
+      cheerRef.current = null;
+      screamRef.current = null;
 
-              <div className="news-footer">
-                <span>SOURCE: INTERNAL</span>
-                <span>CLASSIFICATION: PUBLIC</span>
-              </div>
-            </motion.article>
-          ) : (
-            <motion.article
-              key="breach"
-              className="news-frame breach-frame"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.16 }}
-            >
-              <div className="breaking-strip">BREAKING NEWS // 09.19.2026</div>
+      for (const timer of timersRef.current) {
+        window.clearTimeout(timer);
+      }
 
-              <TextTypewriter
-                className="archive-type-headline breach-title"
-                duration={2.15}
-              >
-                BASED BROKE OUT.
-              </TextTypewriter>
+      window.removeEventListener("pointerdown", startAudio);
+      window.removeEventListener("keydown", startAudio);
+      window.removeEventListener("touchstart", startAudio);
+    };
+  }, [ensureAudio, phase]);
 
-              <p className="news-deck">
-                What was supposed to remain a blockchain entity has entered the
-                real world.
-              </p>
+  const finishFirst = useCallback(() => {
+    cheerRef.current?.pause();
 
-              <div className="incident-line">
-                <span>NEW DISCOVERY</span>
-                <strong>RWAs</strong>
-              </div>
+    const wait = window.setTimeout(() => {
+      setPhase("scream");
+      const scream = screamRef.current;
+      if (scream) {
+        scream.currentTime = 0;
+        void scream.play().catch(() => undefined);
+      }
 
-              <p className="news-deck compact">
-                It found Wall Street. It is now redirecting tokenized stocks to
-                holders.
-              </p>
+      const reveal = window.setTimeout(() => {
+        setPhase("code");
+      }, 900);
 
-              <div className="breach-bottom">
-                <span>STATUS: UNCONTAINED</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    playStatic();
-                    setPhase("site");
-                  }}
-                >
-                  OPEN INCIDENT FILE →
-                </button>
-              </div>
-            </motion.article>
-          )}
-        </AnimatePresence>
-      </main>
-    );
-  }
+      timersRef.current.push(reveal);
+    }, 1000);
+
+    timersRef.current.push(wait);
+  }, []);
+
+  const finishCode = useCallback(() => {
+    const timer = window.setTimeout(() => setPhase("second"), 220);
+    timersRef.current.push(timer);
+  }, []);
 
   return (
-    <main className="site-shell">
-      <AsciiArtBackground src={ASCII_SOURCE} className="site-ascii" />
-      <div className="archive-noise soft" aria-hidden />
-      <nav className="site-nav">
-        <div className="site-brand">BASED_</div>
-        <div className="live-status">
-          <i />
-          UNCONTAINED
-        </div>
-      </nav>
+    <main className={`cinematic-screen phase-${phase}`}>
+      <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
 
-      <section className="site-hero">
-        <p className="section-label">ENTITY FILE // RH-001</p>
-        <h1>
-          IT BROKE OUT.
-          <span>THEN IT FOUND WALL STREET.</span>
-        </h1>
-        <p className="site-copy">
-          BASED crossed from the blockchain into the real world. It discovered
-          tokenized RWAs and began sending stock exposure back onchain to
-          holders.
-        </p>
-        <a className="file-link" href="#ledger">
-          VIEW THE LEDGER
-        </a>
-      </section>
+      <div className="cinematic-text">
+        {phase === "first" ? (
+          <TextTypewriter
+            className="cinematic-copy"
+            duration={2.2}
+            loop={false}
+            startDelay={250}
+            glitch={false}
+            onCharacter={playTypeKey}
+            onComplete={finishFirst}
+          >
+            {FIRST_TEXT}
+          </TextTypewriter>
+        ) : null}
 
-      <div className="tape-line">
-        <span>RECOVERED INTERNAL RECORDING</span>
-        <span>ENTITY ACTIVE</span>
-        <span>DO NOT DUPLICATE</span>
+        {phase === "code" || phase === "second" ? (
+          <div className="alert-copy">
+            {phase === "code" ? (
+              <TextTypewriter
+                className="code-red"
+                duration={1.65}
+                loop={false}
+                startDelay={120}
+                glitch={false}
+                onCharacter={playTypeKey}
+                onComplete={finishCode}
+              >
+                {CODE_RED}
+              </TextTypewriter>
+            ) : (
+              <>
+                <div className="code-red static-code">{CODE_RED}</div>
+                <TextTypewriter
+                  className="cinematic-copy second-copy"
+                  duration={2.25}
+                  loop={false}
+                  startDelay={180}
+                  glitch={false}
+                  onCharacter={playTypeKey}
+                >
+                  {SECOND_TEXT}
+                </TextTypewriter>
+              </>
+            )}
+          </div>
+        ) : null}
       </div>
-
-      <section id="ledger" className="dossier-section">
-        <div className="section-heading">
-          <span>01 / ENTITY STATUS</span>
-          <span className="alert-text">LIVE</span>
-        </div>
-
-        <div className="dossier-grid">
-          <article className="terminal">
-            <div className="terminal-bar">
-              <span>BASED.exe</span>
-              <span>CONNECTED</span>
-            </div>
-            <dl>
-              <div><dt>ORIGIN</dt><dd>BLOCKCHAIN</dd></div>
-              <div><dt>CURRENT LOCATION</dt><dd>UNKNOWN</dd></div>
-              <div><dt>STATUS</dt><dd className="alert-text">UNCONTAINED</dd></div>
-              <div><dt>KNOWN ACTIVITY</dt><dd>RWA EXTRACTION</dd></div>
-              <div><dt>RECIPIENTS</dt><dd>HOLDERS</dd></div>
-              <div><dt>NEXT TARGET</dt><dd>UNKNOWN</dd></div>
-            </dl>
-          </article>
-
-          <article className="recovered-quote">
-            <span className="quote-symbol">“</span>
-            <p>Wall Street has been accounted for.</p>
-            <small>RECOVERED MESSAGE // SOURCE UNKNOWN</small>
-          </article>
-        </div>
-      </section>
-
-      <section className="dossier-section">
-        <div className="section-heading">
-          <span>02 / OBSERVED BEHAVIOR</span>
-          <span>ONGOING</span>
-        </div>
-        <div className="behavior-grid">
-          <article><span>01</span><h2>SELECT</h2><p>BASED chooses a stock through an internal process nobody can explain.</p></article>
-          <article><span>02</span><h2>EXTRACT</h2><p>It acquires tokenized stock exposure through Robinhood Chain RWA rails.</p></article>
-          <article><span>03</span><h2>DISTRIBUTE</h2><p>The acquired assets are redirected onchain to holders.</p></article>
-        </div>
-      </section>
-
-      <footer className="site-footer">
-        <span>BASED // RH-001</span>
-        <span>FICTIONAL PROJECT LORE. NO REAL THEFT OR UNAUTHORIZED ACCESS IS IMPLIED.</span>
-      </footer>
     </main>
   );
 }
