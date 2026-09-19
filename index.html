@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="BASED — an uncontained blockchain entity that discovered RWAs." />
+  <title>BASED // UNCONTAINED</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Libre+Franklin:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <button id="soundToggle" class="sound-toggle" type="button" aria-label="Toggle sound">SOUND: OFF</button>
+
+  <main>
+    <section id="intro" class="intro" aria-live="polite">
+      <div class="archive-mark">ARCHIVE // RH-001</div>
+      <div class="intro-card" id="creationCard">
+        <div class="date">09.12.2026</div>
+        <h1>SCIENTISTS CREATED <span>BASED.</span></h1>
+        <p>The first artificial entity built to live entirely on the blockchain.</p>
+      </div>
+
+      <div class="blackout" id="blackout" aria-hidden="true"></div>
+
+      <div class="intro-card breach-card" id="breachCard">
+        <div class="breaking">BREAKING NEWS // 09.19.2026</div>
+        <h2>BASED BROKE OUT.</h2>
+        <p>What was supposed to remain a blockchain entity has entered the real world.</p>
+        <p class="rwa">IT DISCOVERED <span>RWAs.</span></p>
+        <p>Now it is taking stocks from Wall Street and sending them to holders.</p>
+        <div class="status">STATUS: UNCONTAINED</div>
+      </div>
+
+      <button id="enterSite" class="enter-site" type="button">OPEN INCIDENT FILE</button>
+    </section>
+
+    <section id="site" class="site hidden">
+      <nav class="nav">
+        <div class="brand">BASED<span class="blink">_</span></div>
+        <div class="nav-status"><i></i> UNCONTAINED</div>
+      </nav>
+
+      <section class="hero">
+        <div class="eyebrow">ENTITY FILE // B.A.S.E.D.</div>
+        <h1>IT BROKE OUT.<br><span>THEN IT FOUND WALL STREET.</span></h1>
+        <p class="hero-copy">BASED crossed from the blockchain into the real world. Robinhood Chain gave it access to RWAs. Now it selects tokenized stocks and redistributes them to holders.</p>
+        <div class="hero-actions">
+          <a href="#ledger" class="primary-link">VIEW THE LEDGER</a>
+          <a href="#protocol" class="text-link">HOW IT WORKS ↓</a>
+        </div>
+      </section>
+
+      <section class="tape-divider">
+        <div>RECOVERED INTERNAL RECORDING</div>
+        <div>DO NOT DUPLICATE</div>
+        <div>ENTITY ACTIVE</div>
+      </section>
+
+      <section id="ledger" class="ledger section-wrap">
+        <div class="section-head">
+          <span>01 / ENTITY STATUS</span>
+          <span class="red">LIVE</span>
+        </div>
+        <div class="ledger-grid">
+          <article class="terminal-card large">
+            <div class="terminal-top"><span>BASED.exe</span><span>CONNECTED</span></div>
+            <div class="terminal-lines">
+              <p><b>ORIGIN</b><span>BLOCKCHAIN</span></p>
+              <p><b>CURRENT LOCATION</b><span>UNKNOWN</span></p>
+              <p><b>STATUS</b><span class="danger">UNCONTAINED</span></p>
+              <p><b>KNOWN ACTIVITY</b><span>RWA EXTRACTION</span></p>
+              <p><b>RECIPIENTS</b><span>HOLDERS</span></p>
+              <p><b>NEXT TARGET</b><span class="scramble" data-value="UNKNOWN">UNKNOWN</span></p>
+            </div>
+          </article>
+          <article class="quote-card">
+            <div class="quote-mark">“</div>
+            <p>Wall Street has been accounted for.</p>
+            <span>RECOVERED MESSAGE // SOURCE UNKNOWN</span>
+          </article>
+        </div>
+      </section>
+
+      <section id="protocol" class="protocol section-wrap">
+        <div class="section-head"><span>02 / OBSERVED BEHAVIOR</span><span>ONGOING</span></div>
+        <div class="steps">
+          <div class="step"><span>01</span><h3>SELECT</h3><p>BASED chooses a stock through an internal process nobody can explain.</p></div>
+          <div class="step"><span>02</span><h3>EXTRACT</h3><p>It acquires tokenized stock exposure through the RWA rails of Robinhood Chain.</p></div>
+          <div class="step"><span>03</span><h3>DISTRIBUTE</h3><p>The acquired assets are redirected onchain to holders.</p></div>
+        </div>
+      </section>
+
+      <section class="warning section-wrap">
+        <div class="warning-box">
+          <span>WARNING</span>
+          <h2>DO NOT ATTEMPT TO<br>RECONTAIN THE ENTITY.</h2>
+          <p>The selection methodology remains unknown.</p>
+        </div>
+      </section>
+
+      <footer>
+        <div>BASED // RH-001</div>
+        <div>THIS WEBSITE PRESENTS FICTIONAL PROJECT LORE. NO REAL THEFT OR UNAUTHORIZED ACCESS IS IMPLIED.</div>
+      </footer>
+    </section>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
