@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Advanced1 from "@/components/ui/8bit-advanced1";
 import TextTypewriter from "@/components/ui/the-typewriter";
@@ -172,9 +172,12 @@ const DOSSIERS: Dossier[] = [
 
 const ROTATE_MS = 60_000;
 const TYPE_MS = 45_000;
+const TYPEWRITER_AUDIO =
+  "https://d2ol7oe51mr4n9.cloudfront.net/user_3DFeZk0LqgiFcue7STVOyiCo13m/45316149-6951-4d5a-92a0-ae1ec1c371f0.mp3";
 
 export default function BasedDossierFeed() {
   const [index, setIndex] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -182,6 +185,30 @@ export default function BasedDossierFeed() {
     }, ROTATE_MS);
 
     return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+    audio.loop = true;
+    audio.volume = 0.72;
+    void audio.play().catch(() => undefined);
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [index]);
+
+  const stopTypingSound = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
   }, []);
 
   const dossier = DOSSIERS[index];
@@ -193,7 +220,9 @@ export default function BasedDossierFeed() {
   );
 
   return (
-    <Advanced1
+    <>
+      <audio ref={audioRef} src={TYPEWRITER_AUDIO} preload="auto" />
+      <Advanced1
       title="B.A.S.E.D. dossier feed"
       lines={[]}
       showPrompt={false}
@@ -213,14 +242,13 @@ export default function BasedDossierFeed() {
           startDelay={0}
           targetDurationMs={TYPE_MS}
           glitch
+          onComplete={stopTypingSound}
         >
           {text}
         </TextTypewriter>
 
-        <div className="mt-auto pt-4 retro text-[9px] leading-4 text-muted-foreground/70">
-          NOT A CLAIM OF REAL-WORLD MISCONDUCT. BASED FICTIONAL RISK DOSSIER.
-        </div>
       </div>
-    </Advanced1>
+      </Advanced1>
+    </>
   );
 }
