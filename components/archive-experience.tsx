@@ -21,8 +21,12 @@ const SECOND_TEXT =
 
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("first");
+  const [showNotice, setShowNotice] = useState(true);
   const [started, setStarted] = useState(false);
+
   const phaseRef = useRef<Phase>("first");
+  const startedRef = useRef(false);
+  const soundUnlockedRef = useRef(false);
   const cheerRef = useRef<HTMLAudioElement | null>(null);
   const screamRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -45,6 +49,32 @@ export default function ArchiveExperience() {
 
     return context;
   }, []);
+
+  const unlockSound = useCallback(async () => {
+    const cheer = cheerRef.current;
+    if (!cheer) return;
+
+    const context = ensureAudio();
+    if (context?.state === "suspended") {
+      await context.resume().catch(() => undefined);
+    }
+
+    if (!soundUnlockedRef.current) {
+      cheer.volume = 0;
+      cheer.currentTime = 0;
+
+      try {
+        await cheer.play();
+        soundUnlockedRef.current = true;
+      } catch {
+        return;
+      }
+    }
+
+    if (startedRef.current && phaseRef.current === "first") {
+      cheer.volume = 0.62;
+    }
+  }, [ensureAudio]);
 
   const playTypeKey = useCallback(
     (character: string) => {
@@ -78,54 +108,45 @@ export default function ArchiveExperience() {
     const scream = new Audio(SCREAM_AUDIO);
 
     cheer.loop = true;
-    cheer.volume = 0.62;
+    cheer.volume = 0;
     cheer.preload = "auto";
     scream.volume = 1;
     scream.preload = "auto";
+
     cheer.load();
     scream.load();
 
     cheerRef.current = cheer;
     screamRef.current = scream;
 
-    let unlocked = false;
-
-    const beginSequence = async () => {
-      if (unlocked) return;
-      unlocked = true;
-
-      const context = ensureAudio();
-      if (context?.state === "suspended") {
-        await context.resume().catch(() => undefined);
-      }
-
-      phaseRef.current = "first";
-      setPhase("first");
-      cheer.currentTime = 0;
-
-      try {
-        await cheer.play();
-      } catch {
-        unlocked = false;
-        return;
-      }
-
-      setStarted(true);
-    };
-
+    // Try autoplay. If the browser blocks it, the notice gives the visitor
+    // one second to click/tap anywhere and unlock audio.
     void cheer
       .play()
       .then(() => {
-        if (!unlocked) {
-          unlocked = true;
-          setStarted(true);
-        }
+        soundUnlockedRef.current = true;
       })
       .catch(() => undefined);
 
-    window.addEventListener("pointerdown", beginSequence, { passive: true });
-    window.addEventListener("keydown", beginSequence);
-    window.addEventListener("touchstart", beginSequence, { passive: true });
+    const onUserGesture = () => {
+      void unlockSound();
+    };
+
+    window.addEventListener("pointerdown", onUserGesture, { passive: true });
+    window.addEventListener("keydown", onUserGesture);
+    window.addEventListener("touchstart", onUserGesture, { passive: true });
+
+    const startTimer = window.setTimeout(() => {
+      setShowNotice(false);
+      startedRef.current = true;
+      setStarted(true);
+
+      if (soundUnlockedRef.current) {
+        cheer.volume = 0.62;
+      }
+    }, 1000);
+
+    timersRef.current.push(startTimer);
 
     return () => {
       cheer.pause();
@@ -137,24 +158,27 @@ export default function ArchiveExperience() {
         window.clearTimeout(timer);
       }
 
-      window.removeEventListener("pointerdown", beginSequence);
-      window.removeEventListener("keydown", beginSequence);
-      window.removeEventListener("touchstart", beginSequence);
+      window.removeEventListener("pointerdown", onUserGesture);
+      window.removeEventListener("keydown", onUserGesture);
+      window.removeEventListener("touchstart", onUserGesture);
     };
-  }, [ensureAudio]);
+  }, [unlockSound]);
 
   const finishFirst = useCallback(() => {
     cheerRef.current?.pause();
 
     const wait = window.setTimeout(() => {
+      phaseRef.current = "scream";
       setPhase("scream");
+
       const scream = screamRef.current;
-      if (scream) {
+      if (scream && soundUnlockedRef.current) {
         scream.currentTime = 0;
         void scream.play().catch(() => undefined);
       }
 
       const reveal = window.setTimeout(() => {
+        phaseRef.current = "code";
         setPhase("code");
       }, 900);
 
@@ -165,13 +189,23 @@ export default function ArchiveExperience() {
   }, []);
 
   const finishCode = useCallback(() => {
-    const timer = window.setTimeout(() => setPhase("second"), 220);
+    const timer = window.setTimeout(() => {
+      phaseRef.current = "second";
+      setPhase("second");
+    }, 220);
+
     timersRef.current.push(timer);
   }, []);
 
   return (
     <main className={`cinematic-screen phase-${phase}`}>
       <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
+
+      {showNotice ? (
+        <div className="sound-notice" onPointerDown={() => void unlockSound()}>
+          ENABLE SOUND FOR A BETTER EXPERIENCE
+        </div>
+      ) : null}
 
       <div className="cinematic-text">
         {started && phase === "first" ? (
