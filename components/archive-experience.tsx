@@ -21,6 +21,7 @@ const SECOND_TEXT =
 
 export default function ArchiveExperience() {
   const [phase, setPhase] = useState<Phase>("first");
+  const [started, setStarted] = useState(false);
   const phaseRef = useRef<Phase>("first");
   const cheerRef = useRef<HTMLAudioElement | null>(null);
   const screamRef = useRef<HTMLAudioElement | null>(null);
@@ -78,23 +79,53 @@ export default function ArchiveExperience() {
 
     cheer.loop = true;
     cheer.volume = 0.62;
+    cheer.preload = "auto";
     scream.volume = 1;
+    scream.preload = "auto";
+    cheer.load();
+    scream.load();
 
     cheerRef.current = cheer;
     screamRef.current = scream;
 
-    const startAudio = () => {
-      ensureAudio();
-      if (phaseRef.current === "first" && cheer.paused) {
-        void cheer.play().catch(() => undefined);
+    let unlocked = false;
+
+    const beginSequence = async () => {
+      if (unlocked) return;
+      unlocked = true;
+
+      const context = ensureAudio();
+      if (context?.state === "suspended") {
+        await context.resume().catch(() => undefined);
       }
+
+      phaseRef.current = "first";
+      setPhase("first");
+      cheer.currentTime = 0;
+
+      try {
+        await cheer.play();
+      } catch {
+        unlocked = false;
+        return;
+      }
+
+      setStarted(true);
     };
 
-    void cheer.play().catch(() => undefined);
+    void cheer
+      .play()
+      .then(() => {
+        if (!unlocked) {
+          unlocked = true;
+          setStarted(true);
+        }
+      })
+      .catch(() => undefined);
 
-    window.addEventListener("pointerdown", startAudio, { passive: true });
-    window.addEventListener("keydown", startAudio);
-    window.addEventListener("touchstart", startAudio, { passive: true });
+    window.addEventListener("pointerdown", beginSequence, { passive: true });
+    window.addEventListener("keydown", beginSequence);
+    window.addEventListener("touchstart", beginSequence, { passive: true });
 
     return () => {
       cheer.pause();
@@ -106,9 +137,9 @@ export default function ArchiveExperience() {
         window.clearTimeout(timer);
       }
 
-      window.removeEventListener("pointerdown", startAudio);
-      window.removeEventListener("keydown", startAudio);
-      window.removeEventListener("touchstart", startAudio);
+      window.removeEventListener("pointerdown", beginSequence);
+      window.removeEventListener("keydown", beginSequence);
+      window.removeEventListener("touchstart", beginSequence);
     };
   }, [ensureAudio]);
 
@@ -143,7 +174,7 @@ export default function ArchiveExperience() {
       <AsciiArtBackground src={ASCII_SOURCE} className="cinematic-ascii" />
 
       <div className="cinematic-text">
-        {phase === "first" ? (
+        {started && phase === "first" ? (
           <TextTypewriter
             className="cinematic-copy"
             duration={2.2}
@@ -157,7 +188,7 @@ export default function ArchiveExperience() {
           </TextTypewriter>
         ) : null}
 
-        {phase === "code" || phase === "second" ? (
+        {started && (phase === "code" || phase === "second") ? (
           <div className="alert-copy">
             {phase === "code" ? (
               <TextTypewriter
