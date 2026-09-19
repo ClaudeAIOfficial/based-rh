@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import Advanced1 from "@/components/ui/8bit-advanced1";
+import BasedDossierFeed from "@/components/based-dossier-feed";
 import { DotLoader } from "@/components/ui/dot-loader";
 
 type Article = {
@@ -528,11 +528,7 @@ export default function NewsArchive() {
             </Widget>
 
             <div className="min-h-[420px] lg:min-h-[520px]">
-              <Advanced1
-                title=""
-                lines={[]}
-                className="h-full px-0 py-0 [&>div]:h-full [&>div>div]:h-full [&>div>div]:min-h-[420px] lg:[&>div>div]:min-h-[520px]"
-              />
+              <BasedDossierFeed />
             </div>
           </section>
         </div>
