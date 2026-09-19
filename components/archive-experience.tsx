@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import AsciiArtBackground from "@/components/ui/ascii-art-background";
 import TextTypewriter from "@/components/ui/the-typewriter";
+import NewsArchive from "@/components/news-archive";
 import { CHEER_AUDIO, SCREAM_AUDIO } from "@/lib/cinematic-audio";
 
-type Phase = "notice" | "first" | "scream" | "code" | "second";
+type Phase = "notice" | "first" | "scream" | "code" | "second" | "news";
 
 const ASCII_SOURCE =
   "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1800&q=85";
@@ -220,6 +221,19 @@ export default function ArchiveExperience() {
     timersRef.current.push(timer);
   }, []);
 
+  const finishSecond = useCallback(() => {
+    const timer = window.setTimeout(() => {
+      phaseRef.current = "news";
+      setPhase("news");
+    }, 650);
+
+    timersRef.current.push(timer);
+  }, []);
+
+  if (phase === "news") {
+    return <NewsArchive />;
+  }
+
   return (
     <main
       className={`cinematic-screen phase-${phase}`}
@@ -279,6 +293,7 @@ export default function ArchiveExperience() {
                   targetDurationMs={2200}
                   glitch
                   onCharacter={playTypeKey}
+                  onComplete={finishSecond}
                 >
                   {SECOND_TEXT}
                 </TextTypewriter>
